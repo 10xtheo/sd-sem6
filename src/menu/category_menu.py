@@ -112,13 +112,11 @@ def category_menu(session, cat_repo, pos_repo):
             
             new_name = input("Новое название: ").strip()
             
-            category = cat_repo.get_category(int(category_id))
-            if category:
-                category.name = new_name
-                session.commit()
-                print("\n✅ Категория переименована")
+            ok, message, category = cat_repo.update_category(int(category_id), name=new_name)
+            if ok:
+                print(f"\n✅ Категория переименована, новое имя: {category.name}")
             else:
-                print("\n❌ Категория не найдена")
+                print(f"\n❌ Ошибка: {message}")
             
             wait_for_enter()
         

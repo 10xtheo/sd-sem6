@@ -25,7 +25,7 @@ def position_menu(session, cat_repo, pos_repo):
             clear_screen()
             print_header("ВСЕ ПОЗИЦИИ")
             
-            positions = session.query(Position).all()
+            positions = pos_repo.get_all_positions()
             if positions:
                 table = []
                 for p in positions:
@@ -255,3 +255,4 @@ def position_menu(session, cat_repo, pos_repo):
         
         elif choice == "0":
             break
+    

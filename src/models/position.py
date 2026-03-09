@@ -39,6 +39,11 @@ class Position(Base):
         return list(session.execute(
             select(cls).where(cls.category_id == category_id).order_by(cls.id)
         ).scalars().all())
+    
+    @classmethod
+    def get_all(cls, session: SASession) -> List["Position"]:
+        """Получить все позиции"""
+        return list(session.execute(select(cls)).scalars().all())
 
     @classmethod
     def search_by_name(cls, session: SASession, name_pattern: str) -> List["Position"]:

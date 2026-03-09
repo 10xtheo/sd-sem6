@@ -6,7 +6,6 @@ from models.category import Category
 from models.position import Position
 
 
-
 class CategoryRepository:
     def __init__(self, session: Session):
         self.session = session
@@ -51,6 +50,7 @@ class CategoryRepository:
         category.parent_id = new_parent_id
         self.session.commit()
         return category
+    
 
     def delete_category(self, category_id: int, cascade: bool = False) -> None:
         """Удаление категории"""
@@ -102,3 +102,36 @@ class CategoryRepository:
             return result
         
         return build_tree()
+    
+    def update_category(self, category_id, **kwargs):
+        if not kwargs:
+            return False, "Нет полей для обновления", None
+        
+        category = self.get_category(category_id)
+        if not category:
+            return False, "Категория не найдена", None
+        
+        # Обновляем только переданные поля
+        for key, value in kwargs.items():
+            if hasattr(category, key):
+                setattr(category, key, value)
+            else:
+                return False, f"Поле '{key}' не существует", None
+        
+        try:
+            self.session.commit()
+            updated_fields = ', '.join(kwargs.keys())
+            return True, f"Категория обновлена: {updated_fields}", category
+        except Exception as e:
+            self.session.rollback()
+            return False, f"Ошибка при обновлении: {str(e)}", None
+
+    def delete_all(self) -> int:
+        """Удаление всех категорий"""
+        try:
+            deleted_count = self.session.query(Category).delete()
+            self.session.commit()
+            return deleted_count
+        except Exception as e:
+            self.session.rollback()
+            raise Exception(f"Ошибка при удалении категорий: {str(e)}")

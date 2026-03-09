@@ -6,7 +6,6 @@ from models.category import Category
 from models.position import Position
 
 
-
 class PositionRepository:
     def __init__(self, session: Session):
         self.session = session
@@ -51,6 +50,10 @@ class PositionRepository:
     def get_positions_by_category(self, category_id: int) -> List[Position]:
         """Получение всех позиций категории"""
         return Position.get_by_category(self.session, category_id)
+
+    def get_all_positions(self) -> List[Position]:
+        """Получение всех позиций"""
+        return Position.get_all(self.session)
 
     def update_position(self, position_id: int, **kwargs) -> Position:
         """Обновление позиции"""
@@ -119,3 +122,13 @@ class PositionRepository:
             stmt = stmt.where(and_(*filters))
         
         return list(self.session.execute(stmt.order_by(Position.id)).scalars().all())
+
+    def delete_all(self) -> int:
+            """Удаление всех позиций"""
+            try:
+                deleted_count = self.session.query(Position).delete()
+                self.session.commit()
+                return deleted_count
+            except Exception as e:
+                self.session.rollback()
+                raise Exception(f"Ошибка при удалении позиций: {str(e)}")

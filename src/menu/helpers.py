@@ -1,7 +1,7 @@
 import os
+import json
 
 from models import Category, Position
-
 
 def clear_screen():
     """Очистка экрана"""
@@ -49,3 +49,36 @@ def print_tree(session, start_category_id=None, level=0):
         
         # Рекурсивный вывод подкатегорий
         print_tree(session, cat.id, level + 1)
+
+def load_test_data(cat_repo, pos_repo, json_path=None):
+    if json_path is None:
+        current_dir = os.path.dirname(os.path.abspath(__file__))  # src/menu/helpers
+        project_root = os.path.dirname(current_dir)
+        json_path = os.path.join(os.path.dirname(project_root), 'data', 'test_data.json')
+    
+    with open(json_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    
+    # Create categories and store in dict for lookup
+    categories = {}
+    for cat in data['categories']:
+        if 'parent' in cat:
+            parent = categories[cat['parent']]
+            categories[cat['name']] = cat_repo.add_category(cat['name'], parent.id)
+        else:
+            categories[cat['name']] = cat_repo.add_category(cat['name'])
+    
+    # Create positions
+    for pos in data['positions']:
+        pos_repo.add_position(
+            category_id=categories[pos['category']].id,
+            name=pos['name'],
+            weight=pos['weight'],
+            calories=pos['calories'],
+            protein=pos['protein'],
+            fat=pos['fat'],
+            carbs=pos['carbs'],
+            is_liquid=pos['is_liquid'],
+            is_hot=pos['is_hot']
+        )
+
