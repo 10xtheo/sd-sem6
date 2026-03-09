@@ -12,7 +12,6 @@ from .stats_menu import stats_menu
 
 def main_menu():
     """Главное меню"""
-    # TODO: избавиться от работы с сессией и репо внутри меню
     session = get_session()
     cat_repo = CategoryRepository(session)
     pos_repo = PositionRepository(session)
@@ -29,7 +28,6 @@ def main_menu():
         print_menu_item(0, "Выход", "Завершение работы")
         
         choice = input("\nВаш выбор: ").strip()
-        # TODO убрать сессию
         if choice == "1":
             category_menu(session, cat_repo, pos_repo)
         elif choice == "2":

@@ -23,7 +23,6 @@ def wait_for_enter():
     """Ожидание нажатия Enter"""
     input("\nНажмите Enter для продолжения...")
 
-# TODO: перенести работу с сессией из main
 def print_tree(session, start_category_id=None, level=0):
     """Рекурсивный вывод дерева категорий"""
     query = session.query(Category)
@@ -52,14 +51,13 @@ def print_tree(session, start_category_id=None, level=0):
 
 def load_test_data(cat_repo, pos_repo, json_path=None):
     if json_path is None:
-        current_dir = os.path.dirname(os.path.abspath(__file__))  # src/menu/helpers
+        current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(current_dir)
         json_path = os.path.join(os.path.dirname(project_root), 'data', 'test_data.json')
     
     with open(json_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    # Create categories and store in dict for lookup
     categories = {}
     for cat in data['categories']:
         if 'parent' in cat:
@@ -68,7 +66,6 @@ def load_test_data(cat_repo, pos_repo, json_path=None):
         else:
             categories[cat['name']] = cat_repo.add_category(cat['name'])
     
-    # Create positions
     for pos in data['positions']:
         pos_repo.add_position(
             category_id=categories[pos['category']].id,

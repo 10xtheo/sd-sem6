@@ -14,7 +14,6 @@ class Category(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), index=True)
     
-    # relationships
     parent: Mapped[Optional["Category"]] = relationship("Category", remote_side=[id], back_populates="children")
     children: Mapped[List["Category"]] = relationship("Category", back_populates="parent", cascade="all, delete-orphan")
     positions = relationship("Position", back_populates="category", cascade="all, delete-orphan")

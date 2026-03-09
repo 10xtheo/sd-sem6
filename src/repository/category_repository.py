@@ -40,7 +40,7 @@ class CategoryRepository:
             # Проверяем, не является ли новый родитель потомком текущей категории
             parent = self.get_category(new_parent_id)
             if parent:
-                # Простая проверка на цикл (можно усложнить при необходимости)
+                # Простая проверка на цикл
                 current = parent
                 while current:
                     if current.id == category_id:

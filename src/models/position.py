@@ -14,15 +14,14 @@ class Position(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    weight: Mapped[Optional[int]] = mapped_column(SmallInteger)  # в граммах
-    calories: Mapped[Optional[int]] = mapped_column(SmallInteger)  # ккал
-    protein: Mapped[Optional[int]] = mapped_column(SmallInteger)  # белки в граммах
-    fat: Mapped[Optional[int]] = mapped_column(SmallInteger)      # жиры в граммах
-    carbs: Mapped[Optional[int]] = mapped_column(SmallInteger)    # углеводы в граммах
+    weight: Mapped[Optional[int]] = mapped_column(SmallInteger)
+    calories: Mapped[Optional[int]] = mapped_column(SmallInteger)
+    protein: Mapped[Optional[int]] = mapped_column(SmallInteger)
+    fat: Mapped[Optional[int]] = mapped_column(SmallInteger)
+    carbs: Mapped[Optional[int]] = mapped_column(SmallInteger)
     is_liquid: Mapped[bool] = mapped_column(Boolean, default=False)
     is_hot: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    # relationships
     category = relationship("Category", back_populates="positions")
 
     def __repr__(self) -> str:

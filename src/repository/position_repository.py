@@ -23,7 +23,6 @@ class PositionRepository:
         is_hot: bool = False
     ) -> Position:
         """Добавление новой позиции"""
-        # Проверка существования категории
         category = Category.get_by_id(self.session, category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")

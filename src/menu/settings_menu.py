@@ -32,7 +32,6 @@ def settings_menu(session, cat_repo, pos_repo):
         elif choice == "2":
             clear_screen()
             print_header("ЗАГРУЗКА ТЕСТОВЫХ ДАННЫХ")
-            # todo place test data to separate .json - parse it here
             confirm = input("Это добавит тестовые данные. Продолжить? (y/n): ").strip().lower()
             if confirm == 'y':
                 try:

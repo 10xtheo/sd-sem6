@@ -3,7 +3,6 @@ from tabulate import tabulate
 from .helpers import clear_screen, print_header, print_menu_item, wait_for_enter, print_tree
 
 
-# TODO убрать сессию и репы
 def category_menu(session, cat_repo, pos_repo):
     """Меню операций с категориями"""
     while True:
@@ -25,7 +24,7 @@ def category_menu(session, cat_repo, pos_repo):
         if choice == "1":
             clear_screen()
             print_header("ВСЕ КАТЕГОРИИ")
-            # todo encapsulate repo logic
+
             categories = cat_repo.get_all_categories()
             if categories:
                 table = [[c.id, c.name, c.parent_id or "Корень"] for c in categories]
@@ -34,7 +33,7 @@ def category_menu(session, cat_repo, pos_repo):
                 print("Категории отсутствуют")
             
             wait_for_enter()
-        # todo remove session from here - encapsulate
+
         elif choice == "2":
             clear_screen()
             print_header("ДЕРЕВО КАТЕГОРИЙ")
@@ -46,7 +45,6 @@ def category_menu(session, cat_repo, pos_repo):
             print_header("ДОБАВЛЕНИЕ КАТЕГОРИИ")
             
             name = input("Название категории: ").strip()
-            # todo remove repo
             # Показываем существующие категории для выбора родителя
             categories = cat_repo.get_all_categories()
             if categories:
@@ -56,7 +54,6 @@ def category_menu(session, cat_repo, pos_repo):
             
             parent_id = input("\nID родительской категории (Enter для корня): ").strip()
             parent_id = int(parent_id) if parent_id else None
-            # todo repo remove
             try:
                 category = cat_repo.add_category(name, parent_id)
                 print(f"\n✅ Категория добавлена с ID: {category.id}")
@@ -167,7 +164,6 @@ def category_menu(session, cat_repo, pos_repo):
             if descendants:
                 print(f"\nПотомки категории '{category.name}':")
                 for desc in descendants:
-                    # indent = "  " * (desc.level - 1)
                     indent = "  "
                     print(f"{indent}• {desc.name}")
             else:
