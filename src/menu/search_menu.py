@@ -21,7 +21,7 @@ def search_menu(session, cat_repo, pos_repo):
         if choice == "1":
             clear_screen()
             print_header("ДЕРЕВО КАТЕГОРИЙ")
-            print_tree(session)
+            print_tree(cat_repo)
             wait_for_enter()
         
         elif choice == "2":
@@ -51,7 +51,7 @@ def search_menu(session, cat_repo, pos_repo):
             print_header("ПОИСК ПОЗИЦИЙ ПО КАТЕГОРИИ")
             
             # Показываем дерево
-            print_tree(session)
+            print_tree(cat_repo)
             
             category_id = input("\nID категории: ").strip()
             if not category_id.isdigit():

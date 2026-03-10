@@ -50,7 +50,7 @@ def position_menu(session, cat_repo, pos_repo):
             clear_screen()
             print_header("ПОЗИЦИИ КАТЕГОРИИ")
 
-            print_tree(session)
+            print_tree(cat_repo)
 
             category_id = input("\nID категории: ").strip()
             if not category_id.isdigit():
@@ -64,21 +64,8 @@ def position_menu(session, cat_repo, pos_repo):
                 wait_for_enter()
                 continue
 
-            tree = pos_repo.get_positions_tree(category)
-
             print(f"\nДерево категории '{category.name}':\n")
-
-            for node_type, obj, level in tree:
-                indent = "  " * level
-
-                if node_type == "category":
-                    print(f"{indent}📁 {obj.name} (id: {obj.id})")
-
-                elif node_type == "position":
-                    liquid = "💧" if obj.is_liquid else ""
-                    hot = "🔥" if obj.is_hot else ""
-                    weight = f"{obj.weight}г" if obj.weight else ""
-                    print(f"{indent}📄 {obj.name} {weight} {liquid}{hot}")
+            print_tree(cat_repo, start_category_id=category.id)
 
             wait_for_enter()
         
@@ -87,7 +74,7 @@ def position_menu(session, cat_repo, pos_repo):
             print_header("ДОБАВЛЕНИЕ ПОЗИЦИИ")
             
             # Показываем дерево для выбора категории
-            print_tree(session)
+            print_tree(cat_repo)
             
             category_id = input("\nID категории: ").strip()
             if not category_id.isdigit():
@@ -210,7 +197,7 @@ def position_menu(session, cat_repo, pos_repo):
             
             print(f"\nТекущая категория: {position.category.name}")
             print("\nДоступные категории:")
-            print_tree(session)
+            print_tree(cat_repo)
             
             new_category_id = input("\nID новой категории: ").strip()
             if not new_category_id.isdigit():

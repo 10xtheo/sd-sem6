@@ -23,32 +23,6 @@ def wait_for_enter():
     """Ожидание нажатия Enter"""
     input("\nНажмите Enter для продолжения...")
 
-def print_tree(session, start_category_id=None, level=0):
-    """Рекурсивный вывод дерева категорий"""
-    query = session.query(Category)
-    if start_category_id is None:
-        categories = query.filter(Category.parent_id.is_(None)).order_by(Category.id).all()
-    else:
-        categories = query.filter(Category.parent_id == start_category_id).order_by(Category.id).all()
-    
-    for cat in categories:
-        indent = "  " * level
-        print(f"{indent}📁 {cat.name} (id: {cat.id})")
-        
-        # Вывод позиций категории
-        positions = session.query(Position).filter(Position.category_id == cat.id).all()
-        for pos in positions:
-            liquid = "💧" if pos.is_liquid else ""
-            hot = "🔥" if pos.is_hot else ""
-            nutritional = ""
-            if pos.calories or pos.protein or pos.fat or pos.carbs:
-                nutritional = f" ({pos.calories or 0}ккал, Б:{pos.protein or 0} Ж:{pos.fat or 0} У:{pos.carbs or 0})"
-            weight = f" {pos.weight}г" if pos.weight else ""
-            print(f"{indent}  📄 {pos.name}{liquid}{hot}{weight}{nutritional}")
-        
-        # Рекурсивный вывод подкатегорий
-        print_tree(session, cat.id, level + 1)
-
 def load_test_data(cat_repo, pos_repo, json_path=None):
     if json_path is None:
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -79,3 +53,28 @@ def load_test_data(cat_repo, pos_repo, json_path=None):
             is_hot=pos['is_hot']
         )
 
+def print_tree(cat_repo, start_category_id=None):
+    tree = cat_repo.get_tree(start_category_id)
+
+    for node_type, obj, level in tree:
+        indent = "  " * level
+
+        if node_type == "category":
+            print(f"{indent}📁 {obj.name} (id: {obj.id})")
+
+        elif node_type == "position":
+            liquid = "💧" if obj.is_liquid else ""
+            hot = "🔥" if obj.is_hot else ""
+
+            nutritional = ""
+            if obj.calories or obj.protein or obj.fat or obj.carbs:
+                nutritional = (
+                    f" ({obj.calories or 0}ккал,"
+                    f" Б:{obj.protein or 0}"
+                    f" Ж:{obj.fat or 0}"
+                    f" У:{obj.carbs or 0})"
+                )
+
+            weight = f" {obj.weight}г" if obj.weight else ""
+
+            print(f"{indent}📄 {obj.name}{liquid}{hot}{weight}{nutritional}")

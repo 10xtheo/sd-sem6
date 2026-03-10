@@ -37,7 +37,7 @@ def category_menu(session, cat_repo, pos_repo):
         elif choice == "2":
             clear_screen()
             print_header("ДЕРЕВО КАТЕГОРИЙ")
-            print_tree(session)
+            print_tree(cat_repo)
             wait_for_enter()
         
         elif choice == "3":
@@ -67,7 +67,7 @@ def category_menu(session, cat_repo, pos_repo):
             print_header("ПЕРЕМЕЩЕНИЕ КАТЕГОРИИ")
             
             # Показываем дерево
-            print_tree(session)
+            print_tree(cat_repo)
             
             category_id = input("\nID перемещаемой категории: ").strip()
             if not category_id.isdigit():
@@ -122,7 +122,7 @@ def category_menu(session, cat_repo, pos_repo):
             print_header("УДАЛЕНИЕ КАТЕГОРИИ")
             
             # Показываем дерево
-            print_tree(session)
+            print_tree(cat_repo)
             
             category_id = input("\nID удаляемой категории: ").strip()
             if not category_id.isdigit():

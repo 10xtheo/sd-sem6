@@ -42,7 +42,7 @@ def settings_menu(session, cat_repo, pos_repo):
                     # Загрузка
                     load_test_data(cat_repo, pos_repo)
                     print("\n✅ Тестовые данные загружены!")
-                    print_tree(session)
+                    print_tree(cat_repo)
                     
                 except Exception as e:
                     print(f"\n❌ Ошибка: {e}")

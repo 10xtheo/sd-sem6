@@ -161,3 +161,63 @@ class CategoryRepository:
             current = current.parent
 
         return parents
+
+    def get_tree(self, start_category_id: int | None = None, level: int = 0):
+        result = []
+        # если указана стартовая категория — начинаем с нее
+        if start_category_id is not None and level == 0:
+            start_category = self.get_category(start_category_id)
+            if not start_category:
+                return []
+
+            result.append(("category", start_category, level))
+
+            # позиции этой категории
+            positions = (
+                self.session.query(Position)
+                .filter(Position.category_id == start_category.id)
+                .order_by(Position.id)
+                .all()
+            )
+
+            for pos in positions:
+                result.append(("position", pos, level + 1))
+
+            result.extend(self.get_tree(start_category.id, level + 1))
+            return result
+
+        # выбираем категории
+        if start_category_id is None:
+            categories = (
+                self.session.query(Category)
+                .filter(Category.parent_id.is_(None))
+                .order_by(Category.id)
+                .all()
+            )
+        else:
+            categories = (
+                self.session.query(Category)
+                .filter(Category.parent_id == start_category_id)
+                .order_by(Category.id)
+                .all()
+            )
+
+        for cat in categories:
+            result.append(("category", cat, level))
+
+            # позиции категории
+            positions = (
+                self.session.query(Position)
+                .filter(Position.category_id == cat.id)
+                .order_by(Position.id)
+                .all()
+            )
+
+            for pos in positions:
+                result.append(("position", pos, level + 1))
+
+            # рекурсия
+            result.extend(self.get_tree(cat.id, level + 1))
+
+        return result
+    
