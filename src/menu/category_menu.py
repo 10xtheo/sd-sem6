@@ -159,12 +159,12 @@ def category_menu(session, cat_repo, pos_repo):
                 print("\n❌ Категория не найдена")
                 wait_for_enter()
                 continue
-            
-            descendants = category.get_all_descendants(session)
+            descendants = cat_repo.get_descendants_with_level(session, category.id)
+
             if descendants:
                 print(f"\nПотомки категории '{category.name}':")
-                for desc in descendants:
-                    indent = "  "
+                for desc, level in descendants:
+                    indent = "  " * level
                     print(f"{indent}• {desc.name}")
             else:
                 print("\nНет потомков")
@@ -188,25 +188,17 @@ def category_menu(session, cat_repo, pos_repo):
                 wait_for_enter()
                 continue
             
-            if category.parent:
-                print(f"\nРодитель категории '{category.name}':")
-                print(f"  {category.parent.name} (ID: {category.parent.id})")
+            parents = cat_repo.get_all_parents(category)
+
+            if parents:
+                print(f"\nРодители категории '{category.name}':")
                 
-                # Поиск всех родителей (рекурсивно)
-                parents = []
-                current = category.parent
-                while current:
-                    parents.append(current)
-                    current = current.parent
-                
-                if len(parents) > 1:
-                    print("\nВсе родители:")
-                    for i, p in enumerate(reversed(parents)):
-                        indent = "  " * i
-                        print(f"{indent}• {p.name}")
+                for i, p in enumerate(reversed(parents)):
+                    indent = "  " * i
+                    print(f"{indent}• {p.name} (ID: {p.id})")
             else:
                 print(f"\nКатегория '{category.name}' является корневой")
-            
+
             wait_for_enter()
         
         elif choice == "0":

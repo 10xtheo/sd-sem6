@@ -17,6 +17,7 @@ def position_menu(session, cat_repo, pos_repo):
         print_menu_item(4, "Редактировать позицию")
         print_menu_item(5, "Переместить позицию в другую категорию")
         print_menu_item(6, "Удалить позицию")
+        print_menu_item(7, "Найти родителей позиции")
         print_menu_item(0, "Вернуться в главное меню")
         
         choice = input("\nВаш выбор: ").strip()
@@ -48,35 +49,37 @@ def position_menu(session, cat_repo, pos_repo):
         elif choice == "2":
             clear_screen()
             print_header("ПОЗИЦИИ КАТЕГОРИИ")
-            
-            # Показываем дерево для выбора категории
+
             print_tree(session)
-            
+
             category_id = input("\nID категории: ").strip()
             if not category_id.isdigit():
                 print("❌ Некорректный ID")
                 wait_for_enter()
                 continue
-            
-            positions = pos_repo.get_positions_by_category(int(category_id))
-            if positions:
-                category = cat_repo.get_category(int(category_id))
-                print(f"\nПозиции в категории '{category.name}':")
-                table = []
-                for p in positions:
-                    liquid = "💧" if p.is_liquid else ""
-                    hot = "🔥" if p.is_hot else ""
-                    table.append([
-                        p.id, p.name, p.weight or "—", p.calories or "—",
-                        f"{p.protein or 0}/{p.fat or 0}/{p.carbs or 0}",
-                        f"{liquid}{hot}"
-                    ])
-                print(tabulate(table, 
-                              headers=["ID", "Название", "Вес", "Ккал", "Б/Ж/У", "Свойства"], 
-                              tablefmt="grid"))
-            else:
-                print("\nВ этой категории нет позиций")
-            
+
+            category = cat_repo.get_category(int(category_id))
+            if not category:
+                print("\n❌ Категория не найдена")
+                wait_for_enter()
+                continue
+
+            tree = pos_repo.get_positions_tree(category)
+
+            print(f"\nДерево категории '{category.name}':\n")
+
+            for node_type, obj, level in tree:
+                indent = "  " * level
+
+                if node_type == "category":
+                    print(f"{indent}📁 {obj.name} (id: {obj.id})")
+
+                elif node_type == "position":
+                    liquid = "💧" if obj.is_liquid else ""
+                    hot = "🔥" if obj.is_hot else ""
+                    weight = f"{obj.weight}г" if obj.weight else ""
+                    print(f"{indent}📄 {obj.name} {weight} {liquid}{hot}")
+
             wait_for_enter()
         
         elif choice == "3":
@@ -253,6 +256,34 @@ def position_menu(session, cat_repo, pos_repo):
             
             wait_for_enter()
         
+        elif choice == "7":
+            clear_screen()
+            print_header("ПОИСК РОДИТЕЛЕЙ ПОЗИЦИИ")
+            
+            position_id = input("ID позиции: ").strip()
+            if not position_id.isdigit():
+                print("❌ Некорректный ID")
+                wait_for_enter()
+                continue
+            
+            position = pos_repo.get_position(int(position_id))
+            if not position:
+                print("\n❌ Позиция не найдена")
+                wait_for_enter()
+                continue
+            
+            parents = pos_repo.get_position_parents(position)
+
+            if parents:
+                print(f"\nРодители позиции '{position.name}':")
+                
+                for i, cat in enumerate(reversed(parents)):
+                    indent = "  " * i
+                    print(f"{indent}• {cat.name} (ID: {cat.id})")
+            else:
+                print("\nУ позиции нет категории")
+            
+            wait_for_enter()
+
         elif choice == "0":
             break
-    

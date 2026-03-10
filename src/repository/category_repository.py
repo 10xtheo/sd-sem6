@@ -135,3 +135,29 @@ class CategoryRepository:
         except Exception as e:
             self.session.rollback()
             raise Exception(f"Ошибка при удалении категорий: {str(e)}")
+        
+    def get_descendants_with_level(self, session, category_id: int, level: int = 1):
+        result = []
+
+        children = (
+            session.query(Category)
+            .filter(Category.parent_id == category_id)
+            .order_by(Category.id)
+            .all()
+        )
+
+        for child in children:
+            result.append((child, level))
+            result.extend(self.get_descendants_with_level(session, child.id, level + 1))
+
+        return result
+    
+    def get_all_parents(self, category: Category):
+        parents = []
+        current = category.parent
+
+        while current:
+            parents.append(current)
+            current = current.parent
+
+        return parents

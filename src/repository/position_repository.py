@@ -131,3 +131,34 @@ class PositionRepository:
             except Exception as e:
                 self.session.rollback()
                 raise Exception(f"Ошибка при удалении позиций: {str(e)}")
+
+    def get_position_parents(self, position):
+        parents = []
+        current = position.category
+
+        while current:
+            parents.append(current)
+            current = current.parent
+
+        return parents
+    
+    def get_positions_tree(self, category, level=0):
+        result = [("category", category, level)]
+
+        # позиции этой категории
+        positions = Position.get_by_category(self.session, category.id)
+        for pos in positions:
+            result.append(("position", pos, level + 1))
+
+        # подкатегории
+        children = (
+            self.session.query(Category)
+            .filter(Category.parent_id == category.id)
+            .order_by(Category.id)
+            .all()
+        )
+
+        for child in children:
+            result.extend(self.get_positions_tree(child, level + 1))
+
+        return result
