@@ -4,7 +4,6 @@ from .helpers import clear_screen, print_header, print_menu_item, wait_for_enter
 
 
 def search_menu(session, cat_repo, pos_repo):
-    """Меню поиска и просмотра"""
     while True:
         clear_screen()
         print_header("ПОИСК И ПРОСМОТР")

@@ -11,7 +11,6 @@ from .stats_menu import stats_menu
 
 
 def main_menu():
-    """Главное меню"""
     session = get_session()
     cat_repo = CategoryRepository(session)
     pos_repo = PositionRepository(session)
@@ -29,7 +28,7 @@ def main_menu():
         
         choice = input("\nВаш выбор: ").strip()
         if choice == "1":
-            category_menu(session, cat_repo, pos_repo)
+            category_menu(session, cat_repo)
         elif choice == "2":
             position_menu(session, cat_repo, pos_repo)
         elif choice == "3":

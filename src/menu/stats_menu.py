@@ -7,7 +7,6 @@ from .helpers import clear_screen, print_header, print_menu_item, wait_for_enter
 
 
 def stats_menu(session, cat_repo, pos_repo):
-    """Меню статистики и анализа"""
     while True:
         clear_screen()
         print_header("СТАТИСТИКА И АНАЛИЗ")

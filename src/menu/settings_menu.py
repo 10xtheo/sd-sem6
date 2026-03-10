@@ -3,7 +3,6 @@ from database import init_db
 from .helpers import clear_screen, print_header, print_menu_item, wait_for_enter, print_tree, load_test_data
 
 def settings_menu(session, cat_repo, pos_repo):
-    """Меню настроек"""
     while True:
         clear_screen()
         print_header("НАСТРОЙКИ")

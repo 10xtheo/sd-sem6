@@ -1,26 +1,21 @@
 import os
 import json
 
-from models import Category, Position
 
 def clear_screen():
-    """Очистка экрана"""
     os.system("cls" if os.name == "nt" else "clear")
 
 def print_header(title):
-    """Печать заголовка"""
     print(f"\n{'='*60}")
     print(f"{title:^60}")
     print(f"{'='*60}")
 
 def print_menu_item(num, text, description=""):
-    """Печать пункта меню"""
     print(f"{num}. {text}")
     if description:
         print(f"   {description}")
 
 def wait_for_enter():
-    """Ожидание нажатия Enter"""
     input("\nНажмите Enter для продолжения...")
 
 def load_test_data(cat_repo, pos_repo, json_path=None):

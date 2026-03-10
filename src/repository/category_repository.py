@@ -1,6 +1,5 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, and_
 
 from models.category import Category
 from models.position import Position
@@ -11,22 +10,18 @@ class CategoryRepository:
         self.session = session
 
     def add_category(self, name: str, parent_id: Optional[int] = None) -> Category:
-        """Добавление новой категории"""
         category = Category(name=name, parent_id=parent_id)
         self.session.add(category)
         self.session.commit()
         return category
 
     def get_category(self, category_id: int) -> Optional[Category]:
-        """Получение категории по ID"""
         return Category.get_by_id(self.session, category_id)
 
     def get_all_categories(self) -> List[Category]:
-        """Получение всех категорий"""
         return Category.get_all(self.session)
 
     def move_category(self, category_id: int, new_parent_id: Optional[int]) -> Category:
-        """Перемещение категории"""
         category = self.get_category(category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
@@ -51,9 +46,7 @@ class CategoryRepository:
         self.session.commit()
         return category
     
-
     def delete_category(self, category_id: int, cascade: bool = False) -> None:
-        """Удаление категории"""
         category = self.get_category(category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
@@ -69,39 +62,6 @@ class CategoryRepository:
 
         self.session.delete(category)
         self.session.commit()
-
-    def get_category_tree(self) -> List[Dict[str, Any]]:
-        """Получение дерева категорий"""
-        def build_tree(parent_id: Optional[int] = None) -> List[Dict[str, Any]]:
-            categories = self.session.execute(
-                select(Category).where(Category.parent_id == parent_id).order_by(Category.id)
-            ).scalars().all()
-            
-            result = []
-            for cat in categories:
-                positions = Position.get_by_category(self.session, cat.id)
-                result.append({
-                    "id": cat.id,
-                    "name": cat.name,
-                    "children": build_tree(cat.id),
-                    "positions": [
-                        {
-                            "id": p.id,
-                            "name": p.name,
-                            "weight": p.weight,
-                            "calories": p.calories,
-                            "protein": p.protein,
-                            "fat": p.fat,
-                            "carbs": p.carbs,
-                            "is_liquid": p.is_liquid,
-                            "is_hot": p.is_hot
-                        }
-                        for p in positions
-                    ]
-                })
-            return result
-        
-        return build_tree()
     
     def update_category(self, category_id, **kwargs):
         if not kwargs:
@@ -127,7 +87,6 @@ class CategoryRepository:
             return False, f"Ошибка при обновлении: {str(e)}", None
 
     def delete_all(self) -> int:
-        """Удаление всех категорий"""
         try:
             deleted_count = self.session.query(Category).delete()
             self.session.commit()
@@ -164,36 +123,12 @@ class CategoryRepository:
 
     def get_tree(self, start_category_id: int | None = None, level: int = 0):
         result = []
-        # если указана стартовая категория — начинаем с нее
+
         if start_category_id is not None and level == 0:
-            start_category = self.get_category(start_category_id)
+            start_category = self.session.query(Category).filter(Category.id == start_category_id).first()
             if not start_category:
                 return []
-
-            result.append(("category", start_category, level))
-
-            # позиции этой категории
-            positions = (
-                self.session.query(Position)
-                .filter(Position.category_id == start_category.id)
-                .order_by(Position.id)
-                .all()
-            )
-
-            for pos in positions:
-                result.append(("position", pos, level + 1))
-
-            result.extend(self.get_tree(start_category.id, level + 1))
-            return result
-
-        # выбираем категории
-        if start_category_id is None:
-            categories = (
-                self.session.query(Category)
-                .filter(Category.parent_id.is_(None))
-                .order_by(Category.id)
-                .all()
-            )
+            categories = [start_category]
         else:
             categories = (
                 self.session.query(Category)
@@ -205,18 +140,15 @@ class CategoryRepository:
         for cat in categories:
             result.append(("category", cat, level))
 
-            # позиции категории
             positions = (
                 self.session.query(Position)
                 .filter(Position.category_id == cat.id)
                 .order_by(Position.id)
                 .all()
             )
-
             for pos in positions:
                 result.append(("position", pos, level + 1))
 
-            # рекурсия
             result.extend(self.get_tree(cat.id, level + 1))
 
         return result

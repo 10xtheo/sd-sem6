@@ -1,6 +1,6 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, and_
 
 from models.category import Category
 from models.position import Position
@@ -22,7 +22,6 @@ class PositionRepository:
         is_liquid: bool = False,
         is_hot: bool = False
     ) -> Position:
-        """Добавление новой позиции"""
         category = Category.get_by_id(self.session, category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
@@ -43,19 +42,15 @@ class PositionRepository:
         return position
 
     def get_position(self, position_id: int) -> Optional[Position]:
-        """Получение позиции по ID"""
         return Position.get_by_id(self.session, position_id)
 
     def get_positions_by_category(self, category_id: int) -> List[Position]:
-        """Получение всех позиций категории"""
         return Position.get_by_category(self.session, category_id)
 
     def get_all_positions(self) -> List[Position]:
-        """Получение всех позиций"""
         return Position.get_all(self.session)
 
     def update_position(self, position_id: int, **kwargs) -> Position:
-        """Обновление позиции"""
         position = self.get_position(position_id)
         if not position:
             raise ValueError(f"Позиция с ID {position_id} не найдена")
@@ -68,7 +63,6 @@ class PositionRepository:
         return position
 
     def delete_position(self, position_id: int) -> None:
-        """Удаление позиции"""
         position = self.get_position(position_id)
         if not position:
             raise ValueError(f"Позиция с ID {position_id} не найдена")
@@ -77,7 +71,6 @@ class PositionRepository:
         self.session.commit()
 
     def move_position(self, position_id: int, new_category_id: int) -> Position:
-        """Перемещение позиции в другую категорию"""
         position = self.get_position(position_id)
         if not position:
             raise ValueError(f"Позиция с ID {position_id} не найдена")
@@ -91,7 +84,6 @@ class PositionRepository:
         return position
 
     def search_positions(self, query: str) -> List[Position]:
-        """Поиск позиций по названию"""
         return Position.search_by_name(self.session, query)
 
     def get_filtered_positions(
@@ -102,7 +94,6 @@ class PositionRepository:
         is_hot: Optional[bool] = None,
         category_id: Optional[int] = None
     ) -> List[Position]:
-        """Получение позиций с фильтрацией"""
         filters = []
         
         if min_calories is not None:
@@ -123,14 +114,13 @@ class PositionRepository:
         return list(self.session.execute(stmt.order_by(Position.id)).scalars().all())
 
     def delete_all(self) -> int:
-            """Удаление всех позиций"""
-            try:
-                deleted_count = self.session.query(Position).delete()
-                self.session.commit()
-                return deleted_count
-            except Exception as e:
-                self.session.rollback()
-                raise Exception(f"Ошибка при удалении позиций: {str(e)}")
+        try:
+            deleted_count = self.session.query(Position).delete()
+            self.session.commit()
+            return deleted_count
+        except Exception as e:
+            self.session.rollback()
+            raise Exception(f"Ошибка при удалении позиций: {str(e)}")
 
     def get_position_parents(self, position):
         parents = []

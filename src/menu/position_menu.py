@@ -1,12 +1,9 @@
 from tabulate import tabulate
 
-from models import Position
-
 from .helpers import clear_screen, print_header, print_menu_item, wait_for_enter, print_tree
 
 
 def position_menu(session, cat_repo, pos_repo):
-    """Меню операций с позициями"""
     while True:
         clear_screen()
         print_header("ОПЕРАЦИИ С ПОЗИЦИЯМИ")
