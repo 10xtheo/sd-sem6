@@ -40,7 +40,7 @@ def get_children(category_id: int, session: Session = Depends(get_session), repo
     category = repo.get_category(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
-    return category.get_children(session)
+    return repo.get_children(category_id=category_id)
 
 
 @router.get("/{category_id}/descendants", response_model=List[CategoryOut])
@@ -48,7 +48,7 @@ def get_descendants(category_id: int, session: Session = Depends(get_session), r
     category = repo.get_category(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
-    return category.get_all_descendants(session)
+    return repo.get_descendants_with_level(category_id)
 
 
 @router.get("/{category_id}/parents", response_model=List[CategoryOut])

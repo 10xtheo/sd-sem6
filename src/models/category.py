@@ -18,25 +18,3 @@ class Category(Base):
 
     def __repr__(self) -> str:
         return f"Category(id={self.id!r}, name={self.name!r})"
-
-    @classmethod
-    def get_by_id(cls, session: SASession, id: int) -> Optional["Category"]:
-        return session.get(cls, id)
-
-    @classmethod
-    def get_all(cls, session: SASession) -> List["Category"]:
-        return list(session.execute(select(cls)).scalars().all())
-
-    def get_children(self, session: SASession) -> List["Category"]:
-        return list(session.execute(
-            select(Category).where(Category.parent_id == self.id).order_by(Category.id)
-        ).scalars().all())
-
-    def get_all_descendants(self, session: SASession) -> List["Category"]:
-        cte = select(Category).where(Category.id == self.id).cte(name="descendants", recursive=True)
-        cte = cte.union_all(
-            select(Category).join(cte, Category.parent_id == cte.c.id)
-        )
-        return list(session.execute(
-            select(Category).where(Category.id.in_(select(cte.c.id).where(cte.c.id != self.id)))
-        ).scalars().all())

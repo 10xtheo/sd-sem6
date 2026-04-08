@@ -22,7 +22,7 @@ class PositionRepository:
         is_liquid: bool = False,
         is_hot: bool = False,
     ) -> Position:
-        category = Category.get_by_id(self.session, category_id)
+        category = self.session.get(Category, category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
 
@@ -42,13 +42,15 @@ class PositionRepository:
         return position
 
     def get_position(self, position_id: int) -> Optional[Position]:
-        return Position.get_by_id(self.session, position_id)
+        return self.session.get(Position, position_id)
 
     def get_positions_by_category(self, category_id: int) -> List[Position]:
-        return Position.get_by_category(self.session, category_id)
+        return list(self.session.execute(
+            select(Position).where(Position.category_id == category_id).order_by(Position.id)
+        ).scalars().all())
 
     def get_all_positions(self) -> List[Position]:
-        return Position.get_all(self.session)
+        return list(self.session.execute(select(Position)).scalars().all())
 
     def update_position(self, position_id: int, **kwargs) -> Position:
         position = self.get_position(position_id)
@@ -75,7 +77,7 @@ class PositionRepository:
         if not position:
             raise ValueError(f"Позиция с ID {position_id} не найдена")
 
-        category = Category.get_by_id(self.session, new_category_id)
+        category = self.session.get(Category, new_category_id)
         if not category:
             raise ValueError(f"Категория с ID {new_category_id} не найдена")
 
@@ -84,7 +86,9 @@ class PositionRepository:
         return position
 
     def search_positions(self, query: str) -> List[Position]:
-        return Position.search_by_name(self.session, query)
+        return list(self.session.execute(
+            select(Position).where(Position.name.ilike(f"%{query}%"))
+        ).scalars().all())
 
     def get_filtered_positions(
         self,

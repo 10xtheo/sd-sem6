@@ -1,4 +1,5 @@
 from typing import List, Optional
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from models.category import Category
@@ -16,10 +17,10 @@ class CategoryRepository:
         return category
 
     def get_category(self, category_id: int) -> Optional[Category]:
-        return Category.get_by_id(self.session, category_id)
+        return self.session.get(Category, category_id)
 
     def get_all_categories(self) -> List[Category]:
-        return Category.get_all(self.session)
+        return list(self.session.execute(select(Category)).scalars().all())
 
     def move_category(self, category_id: int, new_parent_id: Optional[int]) -> Category:
         category = self.get_category(category_id)
@@ -47,7 +48,9 @@ class CategoryRepository:
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
 
-        children = category.get_children(self.session)
+        children = list(self.session.execute(
+            select(Category).where(Category.parent_id == category.id).order_by(Category.id)
+        ).scalars().all())
         if children and not cascade:
             children_ids = [c.id for c in children]
             raise ValueError(
@@ -88,6 +91,13 @@ class CategoryRepository:
         except Exception as e:
             self.session.rollback()
             raise Exception(f"Ошибка при удалении категорий: {str(e)}")
+
+    def get_children(self, category_id: int) -> List[Category]:
+        return (
+            list(self.session.execute(
+                select(Category).where(Category.parent_id == category_id).order_by(Category.id)
+            ).scalars().all())
+        )
 
     def get_descendants_with_level(self, category_id: int, level: int = 1):
         result = []

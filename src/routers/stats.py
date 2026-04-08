@@ -40,7 +40,7 @@ def stats_by_category(session: Session = Depends(get_session)):
         {
             "id": cat.id,
             "name": cat.name,
-            "children_count": len(cat.get_children(session)),
+            "children_count": len(cat_repo.get_children(cat.id)),
             "positions_count": len(pos_repo.get_positions_by_category(cat.id)),
         }
         for cat in categories
