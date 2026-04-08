@@ -1,8 +1,6 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String, Boolean, SmallInteger
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.orm import Session as SASession
-from sqlalchemy import select
+from sqlalchemy import ForeignKey, String, Boolean, SmallInteger, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session as SASession
 
 from models.base import Base
 
@@ -35,7 +33,7 @@ class Position(Base):
         return list(session.execute(
             select(cls).where(cls.category_id == category_id).order_by(cls.id)
         ).scalars().all())
-    
+
     @classmethod
     def get_all(cls, session: SASession) -> List["Position"]:
         return list(session.execute(select(cls)).scalars().all())

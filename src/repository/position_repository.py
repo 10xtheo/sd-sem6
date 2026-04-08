@@ -20,7 +20,7 @@ class PositionRepository:
         fat: Optional[int] = None,
         carbs: Optional[int] = None,
         is_liquid: bool = False,
-        is_hot: bool = False
+        is_hot: bool = False,
     ) -> Position:
         category = Category.get_by_id(self.session, category_id)
         if not category:
@@ -35,7 +35,7 @@ class PositionRepository:
             fat=fat,
             carbs=carbs,
             is_liquid=is_liquid,
-            is_hot=is_hot
+            is_hot=is_hot,
         )
         self.session.add(position)
         self.session.commit()
@@ -92,10 +92,10 @@ class PositionRepository:
         max_calories: Optional[int] = None,
         is_liquid: Optional[bool] = None,
         is_hot: Optional[bool] = None,
-        category_id: Optional[int] = None
+        category_id: Optional[int] = None,
     ) -> List[Position]:
         filters = []
-        
+
         if min_calories is not None:
             filters.append(Position.calories >= min_calories)
         if max_calories is not None:
@@ -110,7 +110,7 @@ class PositionRepository:
         stmt = select(Position)
         if filters:
             stmt = stmt.where(and_(*filters))
-        
+
         return list(self.session.execute(stmt.order_by(Position.id)).scalars().all())
 
     def delete_all(self) -> int:
@@ -122,12 +122,10 @@ class PositionRepository:
             self.session.rollback()
             raise Exception(f"Ошибка при удалении позиций: {str(e)}")
 
-    def get_position_parents(self, position):
+    def get_position_parents(self, position: Position) -> List[Category]:
         parents = []
         current = position.category
-
         while current:
             parents.append(current)
             current = current.parent
-
         return parents

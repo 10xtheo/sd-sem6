@@ -26,16 +26,12 @@ class CategoryRepository:
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
 
-        # Проверка на циклы
         if new_parent_id:
-            # Проверяем, не пытаемся ли мы сделать категорию родителем самой себя
             if category_id == new_parent_id:
                 raise ValueError("Категория не может быть родителем самой себя")
-            
-            # Проверяем, не является ли новый родитель потомком текущей категории
+
             parent = self.get_category(new_parent_id)
             if parent:
-                # Простая проверка на цикл
                 current = parent
                 while current:
                     if current.id == category_id:
@@ -45,13 +41,12 @@ class CategoryRepository:
         category.parent_id = new_parent_id
         self.session.commit()
         return category
-    
+
     def delete_category(self, category_id: int, cascade: bool = False) -> None:
         category = self.get_category(category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
 
-        # Проверка наличия потомков
         children = category.get_children(self.session)
         if children and not cascade:
             children_ids = [c.id for c in children]
@@ -62,22 +57,21 @@ class CategoryRepository:
 
         self.session.delete(category)
         self.session.commit()
-    
-    def update_category(self, category_id, **kwargs):
+
+    def update_category(self, category_id: int, **kwargs):
         if not kwargs:
             return False, "Нет полей для обновления", None
-        
+
         category = self.get_category(category_id)
         if not category:
             return False, "Категория не найдена", None
-        
-        # Обновляем только переданные поля
+
         for key, value in kwargs.items():
             if hasattr(category, key):
                 setattr(category, key, value)
             else:
                 return False, f"Поле '{key}' не существует", None
-        
+
         try:
             self.session.commit()
             updated_fields = ', '.join(kwargs.keys())
@@ -94,34 +88,29 @@ class CategoryRepository:
         except Exception as e:
             self.session.rollback()
             raise Exception(f"Ошибка при удалении категорий: {str(e)}")
-        
-    def get_descendants_with_level(self, session, category_id: int, level: int = 1):
-        result = []
 
+    def get_descendants_with_level(self, category_id: int, level: int = 1):
+        result = []
         children = (
-            session.query(Category)
+            self.session.query(Category)
             .filter(Category.parent_id == category_id)
             .order_by(Category.id)
             .all()
         )
-
         for child in children:
             result.append((child, level))
-            result.extend(self.get_descendants_with_level(session, child.id, level + 1))
-
+            result.extend(self.get_descendants_with_level(child.id, level + 1))
         return result
-    
-    def get_all_parents(self, category: Category):
+
+    def get_all_parents(self, category: Category) -> List[Category]:
         parents = []
         current = category.parent
-
         while current:
             parents.append(current)
             current = current.parent
-
         return parents
 
-    def get_tree(self, start_category_id: int | None = None, level: int = 0):
+    def get_tree(self, start_category_id: Optional[int] = None, level: int = 0):
         result = []
 
         if start_category_id is not None and level == 0:
@@ -152,4 +141,3 @@ class CategoryRepository:
             result.extend(self.get_tree(cat.id, level + 1))
 
         return result
-    

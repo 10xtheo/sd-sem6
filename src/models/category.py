@@ -1,10 +1,9 @@
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.orm import Session as SASession
-from sqlalchemy import select
+from sqlalchemy import ForeignKey, String, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session as SASession
 
 from models.base import Base
+
 
 class Category(Base):
     __tablename__ = "categories"
@@ -12,7 +11,7 @@ class Category(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), index=True)
-    
+
     parent: Mapped[Optional["Category"]] = relationship("Category", remote_side=[id], back_populates="children")
     children: Mapped[List["Category"]] = relationship("Category", back_populates="parent", cascade="all, delete-orphan")
     positions = relationship("Position", back_populates="category", cascade="all, delete-orphan")
@@ -29,17 +28,15 @@ class Category(Base):
         return list(session.execute(select(cls)).scalars().all())
 
     def get_children(self, session: SASession) -> List["Category"]:
-        return list(session.execute(select(Category).where(Category.parent_id == self.id).order_by(Category.id)).scalars().all())
+        return list(session.execute(
+            select(Category).where(Category.parent_id == self.id).order_by(Category.id)
+        ).scalars().all())
 
     def get_all_descendants(self, session: SASession) -> List["Category"]:
-
         cte = select(Category).where(Category.id == self.id).cte(name="descendants", recursive=True)
-        
         cte = cte.union_all(
             select(Category).join(cte, Category.parent_id == cte.c.id)
         )
-        
-        result = list(session.execute(select(Category).from_statement(select(Category).where(Category.id.in_(select(cte.c.id).where(cte.c.id != self.id))))
+        return list(session.execute(
+            select(Category).where(Category.id.in_(select(cte.c.id).where(cte.c.id != self.id)))
         ).scalars().all())
-        
-        return result
