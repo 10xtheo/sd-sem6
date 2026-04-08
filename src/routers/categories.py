@@ -36,7 +36,7 @@ def get_category(category_id: int, repo: CategoryRepository = Depends(get_repo))
 
 
 @router.get("/{category_id}/children", response_model=List[CategoryOut])
-def get_children(category_id: int, session: Session = Depends(get_session), repo: CategoryRepository = Depends(get_repo)):
+def get_children(category_id: int, repo: CategoryRepository = Depends(get_repo)):
     category = repo.get_category(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
@@ -44,12 +44,11 @@ def get_children(category_id: int, session: Session = Depends(get_session), repo
 
 
 @router.get("/{category_id}/descendants", response_model=List[CategoryOut])
-def get_descendants(category_id: int, session: Session = Depends(get_session), repo: CategoryRepository = Depends(get_repo)):
+def get_descendants(category_id: int, repo: CategoryRepository = Depends(get_repo)):
     category = repo.get_category(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
-    return repo.get_descendants_with_level(category_id)
-
+    return list(map(lambda x: x[0], repo.get_descendants_with_level(category_id)))
 
 @router.get("/{category_id}/parents", response_model=List[CategoryOut])
 def get_parents(category_id: int, repo: CategoryRepository = Depends(get_repo)):
