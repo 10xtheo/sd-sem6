@@ -3,66 +3,123 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from database import get_session, init_db
-from repository import CategoryRepository, PositionRepository
+from database import get_session
+from models import Unit, EnumType, EnumValue, Category, Position
+from models.position_enum_values import position_enum_values
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 TEST_DATA_PATH = Path(__file__).parent.parent.parent / "data/test_data.json"
 
-
-def _load_test_data(cat_repo: CategoryRepository, pos_repo: PositionRepository):
-    with open(TEST_DATA_PATH, encoding="utf-8") as f:
+def seed_db(session: Session):
+    with open(TEST_DATA_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    name_to_id: dict[str, int] = {}
+    unit_map = {}
+    type_map = {}
+    value_map = {}
+    category_map = {}
 
-    for cat_data in data["categories"]:
-        parent_id = name_to_id.get(cat_data["parent"]) if "parent" in cat_data else None
-        cat = cat_repo.add_category(name=cat_data["name"], parent_id=parent_id)
-        name_to_id[cat.name] = cat.id
+    # UNITS
+    for u in data["units"]:
+        obj = session.query(Unit).filter_by(code=u["code"]).first()
+        if not obj:
+            obj = Unit(**u)
+            session.add(obj)
+            session.flush()
+        unit_map[u["code"]] = obj.id
 
-    for pos_data in data["positions"]:
-        category_id = name_to_id.get(pos_data["category"])
-        if not category_id:
-            raise ValueError(f"Категория '{pos_data['category']}' не найдена")
-        pos_repo.add_position(
-            category_id=category_id,
-            name=pos_data["name"],
-            weight=pos_data.get("weight"),
-            weight_unit_id=pos_data.get("weight_unit_id"),
-            calories=pos_data.get("calories"),
-            protein=pos_data.get("protein"),
-            fat=pos_data.get("fat"),
-            carbs=pos_data.get("carbs"),
-            is_liquid=pos_data.get("is_liquid", False),
-            is_hot=pos_data.get("is_hot", False),
+    # ENUM TYPES
+    for t in data["enum_types"]:
+        obj = session.query(EnumType).filter_by(code=t["code"]).first()
+        if not obj:
+            obj = EnumType(**t)
+            session.add(obj)
+            session.flush()
+        type_map[t["code"]] = obj.id
+
+    # ENUM VALUES
+    for v in data["enum_values"]:
+        obj = (
+            session.query(EnumValue)
+            .filter_by(
+                enum_type_id=type_map[v["type"]],
+                order_number=v["order"]
+            )
+            .first()
         )
+        if not obj:
+            obj = EnumValue(
+                enum_type_id=type_map[v["type"]],
+                order_number=v["order"],
+                name=v["name"],
+                code=v["code"],
+            )
+            session.add(obj)
+            session.flush()
 
+        value_map[v["code"]] = obj.id
 
-@router.post("/init-db")
-def initialize_db():
-    init_db()
-    return {"detail": "База данных инициализирована"}
+    # CATEGORIES 
+    for c in data["categories"]:
+        parent_id = category_map.get(c.get("parent"))
 
+        obj = session.query(Category).filter_by(name=c["name"]).first()
+        if not obj:
+            obj = Category(name=c["name"], parent_id=parent_id)
+            session.add(obj)
+            session.flush()
+
+        category_map[c["name"]] = obj.id
+
+    # POSITIONS 
+    for p in data["positions"]:
+        obj = session.query(Position).filter_by(name=p["name"]).first()
+
+        if not obj:
+            obj = Position(
+                category_id=category_map[p["category"]],
+                name=p["name"],
+                weight=p.get("weight"),
+                calories=p.get("calories"),
+                protein=p.get("protein"),
+                fat=p.get("fat"),
+                carbs=p.get("carbs"),
+                is_liquid=p.get("is_liquid", False),
+                is_hot=p.get("is_hot", False),
+                weight_unit_id=unit_map.get(p.get("unit")),
+            )
+            session.add(obj)
+            session.flush()
+
+            for ev_code in p.get("enum_values", []):
+                session.execute(
+                position_enum_values.insert().values(
+                    position_id=obj.id,
+                    enum_value_id=value_map[ev_code]
+                )
+)
+
+    session.commit()
 
 @router.post("/seed")
-def seed_test_data(session: Session = Depends(get_session)):
-    cat_repo = CategoryRepository(session)
-    pos_repo = PositionRepository(session)
+def seed(session: Session = Depends(get_session)):
     try:
-        pos_repo.delete_all()
-        cat_repo.delete_all()
-        _load_test_data(cat_repo, pos_repo)
+        seed_db(session)
     except Exception as e:
+        session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    return {"detail": "Тестовые данные загружены"}
 
+    return {"status": "ok"}
 
 @router.post("/clear")
-def clear_db(session: Session = Depends(get_session)):
-    pos_repo = PositionRepository(session)
-    cat_repo = CategoryRepository(session)
-    pos_repo.delete_all()
-    cat_repo.delete_all()
-    return {"detail": "База данных очищена"}
+def clear(session: Session = Depends(get_session)):
+    session.execute(position_enum_values.delete())
+    session.query(Position).delete()
+    session.query(EnumValue).delete()
+    session.query(EnumType).delete()
+    session.query(Category).delete()
+    session.query(Unit).delete()
+    session.commit()
+
+    return {"status": "cleared"}

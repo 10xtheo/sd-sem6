@@ -1,6 +1,6 @@
-from typing import Optional
-from pydantic import BaseModel
-
+from typing import Optional, List, Dict
+from pydantic import BaseModel, ConfigDict
+from schemas.enum_value import EnumValueOut
 
 class PositionCreate(BaseModel):
     category_id: int
@@ -44,4 +44,10 @@ class PositionOut(BaseModel):
     is_liquid: bool
     is_hot: bool
 
+
     model_config = {"from_attributes": True}
+
+class PositionWithCharacteristics(PositionOut):
+    characteristics: Dict[str, List[EnumValueOut]]
+
+    model_config = ConfigDict(from_attributes=True)

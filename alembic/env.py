@@ -11,6 +11,9 @@ from models.base import Base
 from models.category import Category
 from models.position import Position
 from models.unit import Unit 
+from models.enum_value import EnumValue
+from models.enum_type import EnumType
+from models.position_enum_values import position_enum_values
 
 load_dotenv()
 

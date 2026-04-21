@@ -3,6 +3,7 @@ from sqlalchemy import ForeignKey, String, Boolean, SmallInteger, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session as SASession
 
 from models.base import Base
+from models.position_enum_values import position_enum_values
 
 
 class Position(Base):
@@ -22,6 +23,8 @@ class Position(Base):
 
     category = relationship("Category", back_populates="positions")
     weight_unit = relationship("Unit")
+    
+    enum_values = relationship("EnumValue", secondary=position_enum_values, back_populates="positions")
 
     def __repr__(self) -> str:
         return f"Position(id={self.id!r}, name={self.name!r}, category_id={self.category_id!r})"

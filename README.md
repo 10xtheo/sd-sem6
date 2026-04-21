@@ -50,7 +50,15 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-# 5. Запуск приложения
+# 5. Миграции Alembic
+```bash
+PYTHONPATH=src alembic revision --autogenerate
+```
+```bash
+PYTHONPATH=src alembic upgrade head
+```
+
+# 6. Запуск приложения
 Запуск main.py
 ```bash
 python src/main.py

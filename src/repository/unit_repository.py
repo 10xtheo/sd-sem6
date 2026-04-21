@@ -1,14 +1,12 @@
 from sqlalchemy.orm import Session
 from models.unit import Unit
-from schemas.unit import UnitCreate, UnitUpdate
-
 
 class UnitRepository:
-    def __init__(self, session):
+    def __init__(self, session: Session):
         self.session = session
 
-    def create(self, data):
-        unit = Unit(**data.model_dump())
+    def create(self, data: dict):
+        unit = Unit(**data)
         self.session.add(unit)
         self.session.commit()
         self.session.refresh(unit)
@@ -20,13 +18,13 @@ class UnitRepository:
     def get_by_id(self, unit_id: int):
         return self.session.query(Unit).filter(Unit.id == unit_id).first()
 
-    def update(self, unit_id: int, data):
+    def update(self, unit_id: int, data: dict):
         unit = self.get_by_id(unit_id)
 
         if not unit:
             raise ValueError("Unit not found")
 
-        for k, v in data.model_dump(exclude_unset=True).items():
+        for k, v in data.items():
             setattr(unit, k, v)
 
         self.session.commit()
@@ -50,4 +48,3 @@ class UnitRepository:
         except Exception as e:
             self.session.rollback()
             raise Exception(f"Ошибка при удалении единиц измерения: {str(e)}")
-    

@@ -21,20 +21,17 @@ def get_unit(unit_id: int, repo: UnitRepository = Depends(get_repo)):
 
     return unit
 
-
 @router.get("/")
 def get_units(repo: UnitRepository = Depends(get_repo)):
     return repo.get_all()
 
-
 @router.post("/", response_model=UnitResponse, status_code=201)
 def create_unit(data: UnitCreate, repo: UnitRepository = Depends(get_repo)):
     try:
-        return repo.create(data)
+        return repo.create(data.model_dump())
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @router.patch("/{unit_id}", response_model=UnitResponse)
 def update_unit(
@@ -43,11 +40,10 @@ def update_unit(
     repo: UnitRepository = Depends(get_repo),
 ):
     try:
-        return repo.update(unit_id, data)
+        return repo.update(unit_id, data.model_dump(exclude_unset=True))
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-
 
 @router.delete("/{unit_id}", status_code=204)
 def delete_unit(unit_id: int, repo: UnitRepository = Depends(get_repo)):

@@ -1,10 +1,11 @@
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, and_
+from collections import defaultdict 
 
 from models.category import Category
 from models.position import Position
-
+from models.enum_value import EnumValue
 
 class PositionRepository:
     def __init__(self, session: Session):
@@ -135,3 +136,35 @@ class PositionRepository:
             parents.append(current)
             current = current.parent
         return parents
+
+    def get_position_full(self, position_id: int, desc: bool = False):
+        position = (
+            self.session.query(Position)
+            .options(
+                joinedload(Position.enum_values)
+                .joinedload(EnumValue.enum_type)
+            )
+            .filter(Position.id == position_id)
+            .first()
+        )
+
+        if not position:
+            return None
+
+        # sorting
+        position.enum_values.sort(
+            key=lambda ev: ev.order_number,
+            reverse=desc
+        )
+
+        # grouping
+        grouped = defaultdict(list)
+
+        for ev in position.enum_values:
+            grouped[ev.enum_type.code].append(ev)
+
+        # return RAW ORM + grouped structure
+        return {
+            "position": position,
+            "characteristics": grouped,
+        }

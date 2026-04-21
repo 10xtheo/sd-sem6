@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from database import get_session
 from repository import PositionRepository
 from schemas import PositionCreate, PositionUpdate, PositionMove, PositionOut
-
+from schemas.position import PositionWithCharacteristics
+from schemas.enum_value import EnumValueOut
 router = APIRouter(prefix="/positions", tags=["positions"])
 
 
@@ -43,7 +44,6 @@ def get_position(position_id: int, repo: PositionRepository = Depends(get_repo))
         raise HTTPException(status_code=404, detail="Позиция не найдена")
     return position
 
-
 @router.get("/{position_id}/parents")
 def get_position_parents(position_id: int, repo: PositionRepository = Depends(get_repo)):
     position = repo.get_position(position_id)
@@ -52,14 +52,12 @@ def get_position_parents(position_id: int, repo: PositionRepository = Depends(ge
     parents = repo.get_position_parents(position)
     return [{"id": c.id, "name": c.name, "parent_id": c.parent_id} for c in parents]
 
-
 @router.post("/", response_model=PositionOut, status_code=201)
 def create_position(body: PositionCreate, repo: PositionRepository = Depends(get_repo)):
     try:
         return repo.add_position(**body.model_dump())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @router.patch("/{position_id}", response_model=PositionOut)
 def update_position(position_id: int, body: PositionUpdate, repo: PositionRepository = Depends(get_repo)):
@@ -68,7 +66,6 @@ def update_position(position_id: int, body: PositionUpdate, repo: PositionReposi
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-
 @router.patch("/{position_id}/move", response_model=PositionOut)
 def move_position(position_id: int, body: PositionMove, repo: PositionRepository = Depends(get_repo)):
     try:
@@ -76,10 +73,38 @@ def move_position(position_id: int, body: PositionMove, repo: PositionRepository
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.delete("/{position_id}", status_code=204)
 def delete_position(position_id: int, repo: PositionRepository = Depends(get_repo)):
     try:
         repo.delete_position(position_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.get("/{position_id}/full", response_model=PositionWithCharacteristics)
+def get_position_full(
+    position_id: int,
+    desc: bool = False,
+    repo: PositionRepository = Depends(get_repo),
+):
+    data = repo.get_position_full(position_id, desc)
+
+    if not data:
+        raise HTTPException(status_code=404, detail="Position not found")
+
+    position = data["position"]
+    grouped = data["characteristics"]
+
+    # mapping 
+    result = {
+        "id": position.id,
+        "name": position.name,
+        "category_id": position.category_id,
+        "is_liquid": position.is_liquid,
+        "is_hot": position.is_hot,
+        "characteristics": {
+            key: [EnumValueOut.model_validate(ev) for ev in values]
+            for key, values in grouped.items()
+        }
+    }
+
+    return result
