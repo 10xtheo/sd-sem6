@@ -30,6 +30,7 @@ def _load_test_data(cat_repo: CategoryRepository, pos_repo: PositionRepository):
             category_id=category_id,
             name=pos_data["name"],
             weight=pos_data.get("weight"),
+            weight_unit_id=pos_data.get("weight_unit_id"),
             calories=pos_data.get("calories"),
             protein=pos_data.get("protein"),
             fat=pos_data.get("fat"),

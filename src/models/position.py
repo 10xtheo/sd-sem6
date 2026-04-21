@@ -12,6 +12,7 @@ class Position(Base):
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     weight: Mapped[Optional[int]] = mapped_column(SmallInteger)
+    weight_unit_id: Mapped[Optional[int]] = mapped_column(ForeignKey("units.id", ondelete="SET NULL"), nullable=True, index=True)
     calories: Mapped[Optional[int]] = mapped_column(SmallInteger)
     protein: Mapped[Optional[int]] = mapped_column(SmallInteger)
     fat: Mapped[Optional[int]] = mapped_column(SmallInteger)
@@ -20,6 +21,7 @@ class Position(Base):
     is_hot: Mapped[bool] = mapped_column(Boolean, default=False)
 
     category = relationship("Category", back_populates="positions")
+    weight_unit = relationship("Unit")
 
     def __repr__(self) -> str:
         return f"Position(id={self.id!r}, name={self.name!r}, category_id={self.category_id!r})"

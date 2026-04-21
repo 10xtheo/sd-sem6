@@ -6,6 +6,7 @@ class PositionCreate(BaseModel):
     category_id: int
     name: str
     weight: Optional[int] = None
+    weight_unit_id: Optional[int] = None
     calories: Optional[int] = None
     protein: Optional[int] = None
     fat: Optional[int] = None
@@ -17,6 +18,7 @@ class PositionCreate(BaseModel):
 class PositionUpdate(BaseModel):
     name: Optional[str] = None
     weight: Optional[int] = None
+    weight_unit_id: Optional[int] = None
     calories: Optional[int] = None
     protein: Optional[int] = None
     fat: Optional[int] = None
@@ -34,6 +36,7 @@ class PositionOut(BaseModel):
     category_id: int
     name: str
     weight: Optional[int] = None
+    weight_unit_id: Optional[int] = None
     calories: Optional[int] = None
     protein: Optional[int] = None
     fat: Optional[int] = None
