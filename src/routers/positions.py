@@ -95,16 +95,11 @@ def get_position_full(
     grouped = data["characteristics"]
 
     # mapping 
-    result = {
-        "id": position.id,
-        "name": position.name,
-        "category_id": position.category_id,
-        "is_liquid": position.is_liquid,
-        "is_hot": position.is_hot,
-        "characteristics": {
-            key: [EnumValueOut.model_validate(ev) for ev in values]
-            for key, values in grouped.items()
-        }
+    result = PositionOut.model_validate(position).model_dump()
+
+    result["characteristics"] = {
+        key: [EnumValueOut.model_validate(ev) for ev in values]
+        for key, values in grouped.items()
     }
 
     return result
