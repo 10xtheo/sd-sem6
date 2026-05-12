@@ -13,7 +13,9 @@ from models.position import Position
 from models.unit import Unit 
 from models.enum_value import EnumValue
 from models.enum_type import EnumType
-from models.position_enum_values import position_enum_values
+from models.parameter import Parameter
+from models.category_parameter import CategoryParameter
+from models.position_parameter import PositionParameter
 
 load_dotenv()
 

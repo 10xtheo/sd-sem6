@@ -3,28 +3,29 @@ from sqlalchemy import ForeignKey, String, Boolean, SmallInteger, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session as SASession
 
 from models.base import Base
-from models.position_enum_values import position_enum_values
+from models.position_parameter import PositionParameter
 
 
 class Position(Base):
     __tablename__ = "positions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), nullable=False, index=True)
+    category_id: Mapped[int] = mapped_column(
+        ForeignKey("categories.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    weight: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    weight_unit_id: Mapped[Optional[int]] = mapped_column(ForeignKey("units.id", ondelete="SET NULL"), nullable=True, index=True)
-    calories: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    protein: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    fat: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    carbs: Mapped[Optional[int]] = mapped_column(SmallInteger)
-    is_liquid: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_hot: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # === УДАЛИТЬ старые hardcoded поля ===
+    # weight, calories, protein, fat, carbs, is_liquid, is_hot, weight_unit_id
 
     category = relationship("Category", back_populates="positions")
-    weight_unit = relationship("Unit")
     
-    enum_values = relationship("EnumValue", secondary=position_enum_values, back_populates="positions")
+    # Новая связь
+    parameters: Mapped[list[PositionParameter]] = relationship(
+        "PositionParameter", 
+        back_populates="position",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"Position(id={self.id!r}, name={self.name!r}, category_id={self.category_id!r})"

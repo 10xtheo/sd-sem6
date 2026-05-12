@@ -1,30 +1,14 @@
 from typing import Optional, List, Dict
 from pydantic import BaseModel, ConfigDict
-from schemas.enum_value import EnumValueOut
+
 
 class PositionCreate(BaseModel):
     category_id: int
     name: str
-    weight: Optional[int] = None
-    weight_unit_id: Optional[int] = None
-    calories: Optional[int] = None
-    protein: Optional[int] = None
-    fat: Optional[int] = None
-    carbs: Optional[int] = None
-    is_liquid: bool = False
-    is_hot: bool = False
 
 
 class PositionUpdate(BaseModel):
     name: Optional[str] = None
-    weight: Optional[int] = None
-    weight_unit_id: Optional[int] = None
-    calories: Optional[int] = None
-    protein: Optional[int] = None
-    fat: Optional[int] = None
-    carbs: Optional[int] = None
-    is_liquid: Optional[bool] = None
-    is_hot: Optional[bool] = None
 
 
 class PositionMove(BaseModel):
@@ -35,19 +19,28 @@ class PositionOut(BaseModel):
     id: int
     category_id: int
     name: str
-    weight: Optional[int] = None
-    weight_unit_id: Optional[int] = None
-    calories: Optional[int] = None
-    protein: Optional[int] = None
-    fat: Optional[int] = None
-    carbs: Optional[int] = None
-    is_liquid: bool
-    is_hot: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
-    model_config = {"from_attributes": True}
+class PositionParameterValue(BaseModel):
+    parameter_id: int
+    short_name: str
+    name: str
+    type_code: str
+    type_name: str
+    unit_symbol: Optional[str] = None
 
-class PositionWithCharacteristics(PositionOut):
-    characteristics: Dict[str, List[EnumValueOut]]
+    val_real: Optional[float] = None
+    val_int: Optional[int] = None
+    val_str: Optional[str] = None
+    val_dt: Optional[str] = None
+    enum_val_id: Optional[int] = None
+    enum_val_name: Optional[str] = None
+
+
+class PositionWithParameters(BaseModel):
+    position: PositionOut
+    parameters: List[PositionParameterValue]
 
     model_config = ConfigDict(from_attributes=True)

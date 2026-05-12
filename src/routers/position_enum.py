@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_session
-from repository.position_enum_repository import PositionEnumRepository
 
 router = APIRouter(prefix="/positions", tags=["position-enums"])
 

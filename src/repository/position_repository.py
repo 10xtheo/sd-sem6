@@ -1,29 +1,27 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import select, and_
-from collections import defaultdict 
+from sqlalchemy import select, and_, text
 
-from models.category import Category
 from models.position import Position
-from models.enum_value import EnumValue
+from models.category import Category
+from models.position_parameter import PositionParameter
+from models.parameter import Parameter
+from repository.position_parameter_repository import PositionParameterRepository
+
 
 class PositionRepository:
     def __init__(self, session: Session):
         self.session = session
+        self.param_repo = PositionParameterRepository(session)
+
+    # ====================== БАЗОВЫЙ CRUD ======================
 
     def add_position(
         self,
         category_id: int,
         name: str,
-        weight: Optional[int] = None,
-        weight_unit_id: Optional[int] = None,
-        calories: Optional[int] = None,
-        protein: Optional[int] = None,
-        fat: Optional[int] = None,
-        carbs: Optional[int] = None,
-        is_liquid: bool = False,
-        is_hot: bool = False,
     ) -> Position:
+        """Создание позиции (только базовые поля)"""
         category = self.session.get(Category, category_id)
         if not category:
             raise ValueError(f"Категория с ID {category_id} не найдена")
@@ -31,17 +29,10 @@ class PositionRepository:
         position = Position(
             category_id=category_id,
             name=name,
-            weight=weight,
-            weight_unit_id=weight_unit_id,
-            calories=calories,
-            protein=protein,
-            fat=fat,
-            carbs=carbs,
-            is_liquid=is_liquid,
-            is_hot=is_hot,
         )
         self.session.add(position)
         self.session.commit()
+        self.session.refresh(position)
         return position
 
     def get_position(self, position_id: int) -> Optional[Position]:
@@ -49,22 +40,25 @@ class PositionRepository:
 
     def get_positions_by_category(self, category_id: int) -> List[Position]:
         return list(self.session.execute(
-            select(Position).where(Position.category_id == category_id).order_by(Position.id)
+            select(Position)
+            .where(Position.category_id == category_id)
+            .order_by(Position.id)
         ).scalars().all())
 
     def get_all_positions(self) -> List[Position]:
         return list(self.session.execute(select(Position)).scalars().all())
 
-    def update_position(self, position_id: int, **kwargs) -> Position:
+    def update_position(self, position_id: int, name: Optional[str] = None) -> Position:
+        """Обновление только базовых полей позиции"""
         position = self.get_position(position_id)
         if not position:
             raise ValueError(f"Позиция с ID {position_id} не найдена")
 
-        for key, value in kwargs.items():
-            if hasattr(position, key) and value is not None:
-                setattr(position, key, value)
+        if name is not None:
+            position.name = name
 
         self.session.commit()
+        self.session.refresh(position)
         return position
 
     def delete_position(self, position_id: int) -> None:
@@ -88,6 +82,8 @@ class PositionRepository:
         self.session.commit()
         return position
 
+    # ====================== ПОИСК И ФИЛЬТРАЦИЯ ======================
+
     def search_positions(self, query: str) -> List[Position]:
         return list(self.session.execute(
             select(Position).where(Position.name.ilike(f"%{query}%"))
@@ -95,33 +91,65 @@ class PositionRepository:
 
     def get_filtered_positions(
         self,
-        min_calories: Optional[int] = None,
-        max_calories: Optional[int] = None,
-        is_liquid: Optional[bool] = None,
-        is_hot: Optional[bool] = None,
         category_id: Optional[int] = None,
+        # Дополнительные фильтры по параметрам можно добавить позже
     ) -> List[Position]:
-        filters = []
-
-        if min_calories is not None:
-            filters.append(Position.calories >= min_calories)
-        if max_calories is not None:
-            filters.append(Position.calories <= max_calories)
-        if is_liquid is not None:
-            filters.append(Position.is_liquid == is_liquid)
-        if is_hot is not None:
-            filters.append(Position.is_hot == is_hot)
-        if category_id is not None:
-            filters.append(Position.category_id == category_id)
-
         stmt = select(Position)
-        if filters:
-            stmt = stmt.where(and_(*filters))
+
+        if category_id is not None:
+            stmt = stmt.where(Position.category_id == category_id)
 
         return list(self.session.execute(stmt.order_by(Position.id)).scalars().all())
 
+    # ====================== РАБОТА С ПАРАМЕТРАМИ ======================
+
+    def write_parameter(
+        self,
+        position_id: int,
+        parameter_id: int,
+        val_real: Optional[float] = None,
+        val_int: Optional[int] = None,
+        val_str: Optional[str] = None,
+        val_dt: Optional[str] = None,
+        enum_val_id: Optional[int] = None,
+    ) -> None:
+        """Запись значения параметра (аналог write_par_position)"""
+        self.param_repo.write_value(
+            position_id=position_id,
+            parameter_id=parameter_id,
+            val_real=val_real,
+            val_int=val_int,
+            val_str=val_str,
+            val_dt=val_dt,
+            enum_val_id=enum_val_id,
+        )
+
+    def get_position_full(self, position_id: int):
+        position = self.get_position(position_id)
+        if not position:
+            return None
+
+        parameters = self.session.execute(
+            select(PositionParameter)
+            .where(PositionParameter.position_id == position_id)
+        ).scalars().all()
+
+        return position, parameters
+
+    def get_position_with_parameters(self, position_id: int):
+        """Альтернативный метод с загрузкой через ORM"""
+        position = self.session.query(Position).options(
+            joinedload(Position.parameters).joinedload(PositionParameter.parameter)
+        ).filter(Position.id == position_id).first()
+
+        return position
+
+    # ====================== СЛУЖЕБНЫЕ ======================
+
     def delete_all(self) -> int:
         try:
+            # Удаляем сначала значения параметров
+            self.session.execute(text("DELETE FROM position_parameters"))
             deleted_count = self.session.query(Position).delete()
             self.session.commit()
             return deleted_count
@@ -136,35 +164,11 @@ class PositionRepository:
             parents.append(current)
             current = current.parent
         return parents
-
-    def get_position_full(self, position_id: int, desc: bool = False):
-        position = (
-            self.session.query(Position)
-            .options(
-                joinedload(Position.enum_values)
-                .joinedload(EnumValue.enum_type)
-            )
-            .filter(Position.id == position_id)
-            .first()
+    
+    def set_enum_value(self, position_id: int, parameter_id: int, enum_val_id: int):
+        """Установить значение enum-параметра"""
+        self.param_repo.write_value(
+            position_id=position_id,
+            parameter_id=parameter_id,
+            enum_val_id=enum_val_id
         )
-
-        if not position:
-            return None
-
-        # sorting
-        position.enum_values.sort(
-            key=lambda ev: ev.order_number,
-            reverse=desc
-        )
-
-        # grouping
-        grouped = defaultdict(list)
-
-        for ev in position.enum_values:
-            grouped[ev.enum_type.code].append(ev)
-
-        # return RAW ORM + grouped structure
-        return {
-            "position": position,
-            "characteristics": grouped,
-        }

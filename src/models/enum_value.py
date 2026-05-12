@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, SmallInteger, Float, ForeignKey
 
-from models import Base
+from models.base import Base
 
 
 class EnumValue(Base):
@@ -24,9 +24,8 @@ class EnumValue(Base):
         nullable=True
     )
 
+    # Только связь с типом
     enum_type = relationship("EnumType", back_populates="values")
-    positions = relationship(
-        "Position",
-        secondary="position_enum_values",
-        back_populates="enum_values"
-    )
+
+    def __repr__(self):
+        return f"EnumValue(id={self.id}, name={self.name!r}, code={self.code})"
