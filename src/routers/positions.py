@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from database import get_session
 from repository.position_repository import PositionRepository
 from schemas.position import PositionCreate, PositionUpdate, PositionMove, PositionOut
-from schemas.position_parameter import PositionWithParameters, PositionParameterValue, PositionOutMinimal
+from schemas.position_parameter import PositionWithParameters, PositionWithAllParameters
 
 
 router = APIRouter(prefix="/positions", tags=["positions"])
@@ -39,21 +39,12 @@ def get_position(position_id: int, repo: PositionRepository = Depends(get_repo))
     return position
 
 # TODO: починить добавить валидацию как выше через response_model=...
-@router.get("/{position_id}/full")
+@router.get("/{position_id}/full", response_model=PositionWithParameters)
 def get_position_full(position_id: int, repo=Depends(get_repo)):
-
     result = repo.get_position_full(position_id)
-
-    if result is None:
-        return None
-
-    position, parameters = result
-
-    return {
-        "position": position,
-        "parameters": parameters
-    }
-
+    if not result:
+        raise HTTPException(status_code=404, detail="Позиция не найдена")
+    return result
 
 @router.get("/{position_id}/parents")
 def get_position_parents(position_id: int, repo: PositionRepository = Depends(get_repo)):

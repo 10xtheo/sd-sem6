@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from models.category import Category
+from models.category_parameter import CategoryParameter
 from models.position import Position
 
 
@@ -13,7 +14,30 @@ class CategoryRepository:
     def add_category(self, name: str, parent_id: Optional[int] = None) -> Category:
         category = Category(name=name, parent_id=parent_id)
         self.session.add(category)
+        self.session.flush()  # Получаем ID категории до коммита
+        
+        # Наследование параметров от родительской категории
+        if parent_id is not None:
+            stmt = (
+                select(CategoryParameter)
+                .where(CategoryParameter.category_id == parent_id)
+                .order_by(CategoryParameter.order_num)
+            )
+            parent_params =  self.session.scalars(stmt).all()
+            
+            for cp in parent_params:
+                # Копируем параметры от родителя
+                new_cp = CategoryParameter(
+                    category_id=category.id,
+                    parameter_id=cp.parameter_id,
+                    order_num=cp.order_num,
+                    min_val=cp.min_val,
+                    max_val=cp.max_val
+                )
+                self.session.add(new_cp)
+        
         self.session.commit()
+        self.session.refresh(category)
         return category
 
     def get_category(self, category_id: int) -> Optional[Category]:

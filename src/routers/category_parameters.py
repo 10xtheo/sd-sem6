@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_session
@@ -36,3 +36,29 @@ def add_parameter_to_category(
 @router.get("/category/{category_id}", response_model=list[CategoryParameterOut])
 def get_category_parameters(category_id: int, repo: CategoryParameterRepository = Depends(get_repo)):
     return repo.get_for_category(category_id)
+
+@router.delete("/{category_id}/parameters/{parameter_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_parameter_from_category(
+    category_id: int,
+    parameter_id: int,
+    repo: CategoryParameterRepository = Depends(get_repo)
+):
+    """
+    Удаляет параметр у категории и всех её потомков (каскадно).
+    """
+    try:
+        # Проверяем, существует ли параметр у категории
+        if not repo.parameter_exists_in_category(category_id, parameter_id):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Параметр {parameter_id} не найден у категории {category_id}"
+            )
+        
+        deleted_count = repo.delete_from_category(category_id, parameter_id)
+        
+        return None  # 204 No Content
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

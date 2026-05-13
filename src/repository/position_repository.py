@@ -4,6 +4,7 @@ from sqlalchemy import select, and_, text
 
 from models.position import Position
 from models.category import Category
+from models.category_parameter import CategoryParameter
 from models.position_parameter import PositionParameter
 from models.parameter import Parameter
 from repository.position_parameter_repository import PositionParameterRepository
@@ -14,6 +15,7 @@ class PositionRepository:
         self.session = session
         self.param_repo = PositionParameterRepository(session)
 
+
     # ====================== БАЗОВЫЙ CRUD ======================
 
     def add_position(
@@ -21,19 +23,38 @@ class PositionRepository:
         category_id: int,
         name: str,
     ) -> Position:
-        """Создание позиции (только базовые поля)"""
-        category = self.session.get(Category, category_id)
-        if not category:
-            raise ValueError(f"Категория с ID {category_id} не найдена")
+            """Создание позиции с наследованием параметров от категории"""
+            category = self.session.get(Category, category_id)
+            if not category:
+                raise ValueError(f"Категория с ID {category_id} не найдена")
 
-        position = Position(
-            category_id=category_id,
-            name=name,
-        )
-        self.session.add(position)
-        self.session.commit()
-        self.session.refresh(position)
-        return position
+            position = Position(
+                category_id=category_id,
+                name=name,
+            )
+            self.session.add(position)
+            self.session.flush()  # Получаем ID позиции до коммита
+            
+            # Наследование параметров от категории
+            stmt = (
+                select(CategoryParameter)
+                .where(CategoryParameter.category_id == category_id)
+                .order_by(CategoryParameter.order_num)
+            )
+            category_params =  self.session.scalars(stmt).all()
+            
+            for cp in category_params:
+                # Создаем запись параметра для позиции (со значением NULL)
+                pp = PositionParameter(
+                    position_id=position.id,
+                    parameter_id=cp.parameter_id
+                    # Все поля значений остаются NULL
+                )
+                self.session.add(pp)
+            
+            self.session.commit()
+            self.session.refresh(position)
+            return position
 
     def get_position(self, position_id: int) -> Optional[Position]:
         return self.session.get(Position, position_id)
@@ -124,17 +145,48 @@ class PositionRepository:
             enum_val_id=enum_val_id,
         )
 
+    # def get_position_full(self, position_id: int):
+    #     position = self.get_position(position_id)
+    #     if not position:
+    #         return None
+
+    #     parameters = self.session.execute(
+    #         select(PositionParameter)
+    #         .where(PositionParameter.position_id == position_id)
+    #     ).scalars().all()
+
+    #     return position, parameters
     def get_position_full(self, position_id: int):
-        position = self.get_position(position_id)
+        """Возвращает позицию + все параметры в формате, совместимом с PositionWithParameters"""
+        position = (
+            self.session.query(Position)
+            .options(
+                joinedload(Position.parameters)
+                .joinedload(PositionParameter.parameter)
+                .joinedload(Parameter.param_type),           # paramType
+                
+                joinedload(Position.parameters)
+                .joinedload(PositionParameter.parameter)
+                .joinedload(Parameter.enum_type),            # enumType
+                
+                joinedload(Position.parameters)
+                .joinedload(PositionParameter.parameter)
+                .joinedload(Parameter.unit),                 # unit
+                
+                joinedload(Position.parameters)
+                .joinedload(PositionParameter.enum_value)    # enum_value
+            )
+            .filter(Position.id == position_id)
+            .first()
+        )
+
         if not position:
             return None
 
-        parameters = self.session.execute(
-            select(PositionParameter)
-            .where(PositionParameter.position_id == position_id)
-        ).scalars().all()
-
-        return position, parameters
+        return {
+            "position": position,
+            "position_parameters": position.parameters
+        }
 
     def get_position_with_parameters(self, position_id: int):
         """Альтернативный метод с загрузкой через ORM"""

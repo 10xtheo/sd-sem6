@@ -4,7 +4,6 @@ from typing import Optional
 
 from database import get_session
 from repository.position_parameter_repository import PositionParameterRepository
-from schemas.position_parameter import PositionParameterValue
 
 router = APIRouter(prefix="/position-parameters", tags=["position-parameters"])
 

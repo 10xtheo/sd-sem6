@@ -13,7 +13,7 @@ class ParameterRepository:
 
     def create(self, short_name: str, name: str, param_type_code: str,
             enum_type_id: Optional[int] = None, unit_id: Optional[int] = None) -> Parameter:
-
+        
         result = self.session.execute(
             select(EnumValue.id)
             .join(EnumType)
@@ -35,7 +35,6 @@ class ParameterRepository:
             enum_type_id=enum_type_id,
             unit_id=unit_id
         )
-
         self.session.add(param)
         self.session.commit()
         self.session.refresh(param)

@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import InternalError
 
 from database import get_session
 from repository.parameter_repository import ParameterRepository
@@ -23,8 +24,14 @@ def create_parameter(body: ParameterCreate, repo: ParameterRepository = Depends(
             enum_type_id=body.enum_type_id,
             unit_id=body.unit_id
         )
+    except InternalError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
 
 @router.get("/", response_model=List[ParameterOut])
 def get_all_parameters(repo: ParameterRepository = Depends(get_repo)):

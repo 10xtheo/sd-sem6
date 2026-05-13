@@ -3,11 +3,8 @@ from .position import (
     PositionCreate, 
     PositionUpdate, 
     PositionMove, 
-    PositionOut,
-    PositionWithParameters
+    PositionOut
 )
-
-from .position_parameter import PositionOutMinimal
 
 from .parameter import ParameterCreate, ParameterOut
 from .category_parameter import CategoryParameterCreate, CategoryParameterOut
