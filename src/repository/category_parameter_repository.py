@@ -10,43 +10,55 @@ from models.parameter import Parameter
 class CategoryParameterRepository:
     def __init__(self, session: Session):
         self.session = session
-
+    # Процедура ADD_PARAMETER_CLASS БД
     def add_to_category(self, category_id: int, parameter_id: int,
                         order_num: int = 0, min_val: Optional[float] = None,
                         max_val: Optional[float] = None) -> None:
-        """Аналог add_parameter_to_category() — с распространением на дочерние категории"""
-        # Основная категория
-        cp = CategoryParameter(
+        """Аналог add_parameter_to_category() — добавляет параметр категории и всем её потомкам"""
+        
+        # 1. Upsert для самой категории
+        self.session.merge(CategoryParameter(
             category_id=category_id,
             parameter_id=parameter_id,
             order_num=order_num,
             min_val=min_val,
             max_val=max_val
-        )
-        self.session.merge(cp)  # ON CONFLICT UPDATE
+        ))
 
-        # Распространение на дочерние (рекурсивно через CTE)
-        self.session.execute(text("""
-            INSERT INTO category_parameters (category_id, parameter_id, order_num, min_val, max_val)
-            WITH RECURSIVE descendants AS (
-                SELECT id FROM categories WHERE parent_id = :category_id
-                UNION ALL
-                SELECT c.id FROM categories c
-                JOIN descendants d ON c.parent_id = d.id
-            )
-            SELECT d.id, :parameter_id, :order_num, :min_val, :max_val
-            FROM descendants d
-            ON CONFLICT (category_id, parameter_id) DO NOTHING;
-        """), {
-            "category_id": category_id,
-            "parameter_id": parameter_id,
-            "order_num": order_num,
-            "min_val": min_val,
-            "max_val": max_val
-        })
+        # 2. Получаем всех потомков
+        descendant_ids = self._get_descendant_ids(category_id)
+        
+        if descendant_ids:
+            # 3. Создаём объекты только для тех, кого ещё нет
+            existing = {
+                cp.category_id 
+                for cp in self.session.query(CategoryParameter.category_id)
+                .filter(
+                    CategoryParameter.category_id.in_(descendant_ids),
+                    CategoryParameter.parameter_id == parameter_id
+                )
+                .all()
+            }
+
+            to_add = [
+                CategoryParameter(
+                    category_id=did,
+                    parameter_id=parameter_id,
+                    order_num=order_num,
+                    min_val=min_val,
+                    max_val=max_val
+                )
+                for did in descendant_ids
+                if did not in existing
+            ]
+
+            # 4. Массовое добавление
+            if to_add:
+                self.session.bulk_save_objects(to_add)
 
         self.session.commit()
 
+    # Процедура FIND_PAR_CLASS бд
     def get_for_category(self, category_id: int):
         """Аналог find_par_category()"""
         stmt = (

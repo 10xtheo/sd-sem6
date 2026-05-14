@@ -11,7 +11,7 @@ router = APIRouter(prefix="/position-parameters", tags=["position-parameters"])
 def get_repo(session: Session = Depends(get_session)) -> PositionParameterRepository:
     return PositionParameterRepository(session)
 
-
+# Процедура WRITE_PAR_PROD СЕРВВЕР
 @router.post("/{position_id}/parameters/{parameter_id}")
 def write_position_parameter(
     position_id: int,
@@ -19,7 +19,7 @@ def write_position_parameter(
     val_real: Optional[float] = None,
     val_int: Optional[int] = None,
     val_str: Optional[str] = None,
-    val_dt: Optional[str] = None,      # можно использовать datetime, но str тоже ок для начала
+    val_dt: Optional[str] = None,
     enum_val_id: Optional[int] = None,
     repo: PositionParameterRepository = Depends(get_repo)
 ):

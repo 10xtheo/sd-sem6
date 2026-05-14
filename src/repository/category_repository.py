@@ -10,35 +10,39 @@ from models.position import Position
 class CategoryRepository:
     def __init__(self, session: Session):
         self.session = session
-
     def add_category(self, name: str, parent_id: Optional[int] = None) -> Category:
+        """Создание категории с наследованием параметров от родителя"""
         category = Category(name=name, parent_id=parent_id)
         self.session.add(category)
-        self.session.flush()  # Получаем ID категории до коммита
-        
+        self.session.flush()  # Получаем ID категории
+
         # Наследование параметров от родительской категории
         if parent_id is not None:
-            stmt = (
-                select(CategoryParameter)
-                .where(CategoryParameter.category_id == parent_id)
-                .order_by(CategoryParameter.order_num)
-            )
-            parent_params =  self.session.scalars(stmt).all()
-            
-            for cp in parent_params:
-                # Копируем параметры от родителя
-                new_cp = CategoryParameter(
-                    category_id=category.id,
-                    parameter_id=cp.parameter_id,
-                    order_num=cp.order_num,
-                    min_val=cp.min_val,
-                    max_val=cp.max_val
-                )
-                self.session.add(new_cp)
-        
+            self._inherit_parameters_from_parent(category.id, parent_id)
+
         self.session.commit()
         self.session.refresh(category)
         return category
+
+    # Процедура COPY_PAR БД
+    def _inherit_parameters_from_parent(self, child_category_id: int, parent_category_id: int) -> None:
+        """Копирует параметры родительской категории в дочернюю (аналог COPY_PAR)"""
+        stmt = (
+            select(CategoryParameter)
+            .where(CategoryParameter.category_id == parent_category_id)
+            .order_by(CategoryParameter.order_num)
+        )
+        parent_params = self.session.scalars(stmt).all()
+
+        for cp in parent_params:
+            new_cp = CategoryParameter(
+                category_id=child_category_id,
+                parameter_id=cp.parameter_id,
+                order_num=cp.order_num,
+                min_val=cp.min_val,
+                max_val=cp.max_val
+            )
+            self.session.add(new_cp)
 
     def get_category(self, category_id: int) -> Optional[Category]:
         return self.session.get(Category, category_id)

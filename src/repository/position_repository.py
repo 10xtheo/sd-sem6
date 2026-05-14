@@ -17,12 +17,11 @@ class PositionRepository:
 
 
     # ====================== БАЗОВЫЙ CRUD ======================
-
     def add_position(
-        self,
-        category_id: int,
-        name: str,
-    ) -> Position:
+            self,
+            category_id: int,
+            name: str,
+        ) -> Position:
             """Создание позиции с наследованием параметров от категории"""
             category = self.session.get(Category, category_id)
             if not category:
@@ -33,28 +32,33 @@ class PositionRepository:
                 name=name,
             )
             self.session.add(position)
-            self.session.flush()  # Получаем ID позиции до коммита
-            
-            # Наследование параметров от категории
-            stmt = (
-                select(CategoryParameter)
-                .where(CategoryParameter.category_id == category_id)
-                .order_by(CategoryParameter.order_num)
-            )
-            category_params =  self.session.scalars(stmt).all()
-            
-            for cp in category_params:
-                # Создаем запись параметра для позиции (со значением NULL)
-                pp = PositionParameter(
-                    position_id=position.id,
-                    parameter_id=cp.parameter_id
-                    # Все поля значений остаются NULL
-                )
-                self.session.add(pp)
-            
+            self.session.flush()  # Получаем ID позиции
+
+            # Наследование параметров от категории (аналог COPY_PAR для позиции)
+            self._copy_parameters_to_position(position.id, category_id)
+
             self.session.commit()
             self.session.refresh(position)
             return position
+
+    # Процедура COPY_PAR БД
+    def _copy_parameters_to_position(self, position_id: int, category_id: int) -> None:
+        """Копирует параметры категории в новую позицию (наследует структуру)"""
+        stmt = (
+            select(CategoryParameter)
+            .where(CategoryParameter.category_id == category_id)
+            .order_by(CategoryParameter.order_num)
+        )
+        category_params = self.session.scalars(stmt).all()
+
+        for cp in category_params:
+            # Создаём запись параметра для позиции (значения остаются NULL)
+            pp = PositionParameter(
+                position_id=position_id,
+                parameter_id=cp.parameter_id
+                # val_real, val_int, ... — остаются NULL
+            )
+            self.session.add(pp)
 
     def get_position(self, position_id: int) -> Optional[Position]:
         return self.session.get(Position, position_id)
@@ -156,6 +160,8 @@ class PositionRepository:
     #     ).scalars().all()
 
     #     return position, parameters
+    
+    # Процедура FIND_PAR_PROD бд
     def get_position_full(self, position_id: int):
         """Возвращает позицию + все параметры в формате, совместимом с PositionWithParameters"""
         position = (

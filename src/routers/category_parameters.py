@@ -12,7 +12,7 @@ router = APIRouter(prefix="/category-parameters", tags=["category-parameters"])
 def get_repo(session: Session = Depends(get_session)) -> CategoryParameterRepository:
     return CategoryParameterRepository(session)
 
-
+# Процедура ADD_PARAMETR_CLASS СЕРВЕР
 @router.post("/", status_code=201)
 def add_parameter_to_category(
     data: CategoryParameterCreate, 
@@ -27,12 +27,10 @@ def add_parameter_to_category(
             max_val=data.max_val
         )
         return {"detail": "Параметр успешно добавлен к категории и всем дочерним"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
-
+# Процедура FIND_PAR_CLASS сервер
 @router.get("/category/{category_id}", response_model=list[CategoryParameterOut])
 def get_category_parameters(category_id: int, repo: CategoryParameterRepository = Depends(get_repo)):
     return repo.get_for_category(category_id)

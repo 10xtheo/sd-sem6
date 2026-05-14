@@ -38,7 +38,7 @@ def get_position(position_id: int, repo: PositionRepository = Depends(get_repo))
         raise HTTPException(status_code=404, detail="Позиция не найдена")
     return position
 
-# TODO: починить добавить валидацию как выше через response_model=...
+# Процедура FIND_PAR_PROD сервер
 @router.get("/{position_id}/full", response_model=PositionWithParameters)
 def get_position_full(position_id: int, repo=Depends(get_repo)):
     result = repo.get_position_full(position_id)

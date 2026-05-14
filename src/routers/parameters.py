@@ -13,26 +13,21 @@ router = APIRouter(prefix="/parameters", tags=["parameters"])
 def get_repo(session: Session = Depends(get_session)) -> ParameterRepository:
     return ParameterRepository(session)
 
-
+# Процедура INS_PARAMETER СЕРВЕР
 @router.post("/", response_model=ParameterOut, status_code=201)
 def create_parameter(body: ParameterCreate, repo: ParameterRepository = Depends(get_repo)):
     try:
-        return repo.create(
+        return repo.add_parameter(
             short_name=body.short_name,
             name=body.name,
-            param_type_code=body.param_type_code,  # ← только это
+            param_type_code=body.param_type_code,
             enum_type_id=body.enum_type_id,
             unit_id=body.unit_id
         )
-    except InternalError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
-    except ValueError as e:
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-
+    
 @router.get("/", response_model=List[ParameterOut])
 def get_all_parameters(repo: ParameterRepository = Depends(get_repo)):
     return repo.get_all()
