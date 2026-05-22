@@ -10,7 +10,7 @@ from models.enum_type import EnumType
 class ParameterRepository:
     def __init__(self, session: Session):
         self.session = session
-    # Процедура INS_PARAMETR БД
+    # Процедура INS_PARAMETER БД
     def add_parameter(self, short_name: str, name: str, param_type_code: str,
             enum_type_id: Optional[int] = None, unit_id: Optional[int] = None) -> Parameter:
         
