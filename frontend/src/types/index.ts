@@ -85,6 +85,14 @@ export interface PositionWithParameters {
   position_parameters: ParameterValue[];
 }
 
+/** Returned by GET /positions/search — flat position + embedded params */
+export interface PositionFull {
+  id: number;
+  category_id: number;
+  name: string;
+  parameters: ParameterValue[];
+}
+
 export const PARAM_TYPE_CODES = [
   { code: 'real', label: 'Вещественное' },
   { code: 'integer', label: 'Целое' },

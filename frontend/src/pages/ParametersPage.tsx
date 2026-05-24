@@ -15,6 +15,7 @@ export default function ParametersPage() {
 
   const [addModal, setAddModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState<Parameter | null>(null);
+  const [detailModal, setDetailModal] = useState<Parameter | null>(null);
   const [form, setForm] = useState({
     short_name: '', name: '', param_type_code: 'real', enum_type_id: '', unit_id: '',
   });
@@ -22,6 +23,12 @@ export default function ParametersPage() {
   const { data: params = [], isLoading } = useQuery({ queryKey: ['parameters'], queryFn: parametersApi.getAll });
   const { data: enumTypes = [] } = useQuery({ queryKey: ['enum-types'], queryFn: enumsApi.getTypes });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: unitsApi.getAll });
+  // GET /parameters/{id} — fetch fresh detail when viewing
+  const { data: paramDetail } = useQuery({
+    queryKey: ['parameter', detailModal?.id],
+    queryFn: () => parametersApi.getById(detailModal!.id),
+    enabled: !!detailModal,
+  });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['parameters'] });
 
@@ -89,8 +96,12 @@ export default function ParametersPage() {
                         <td>{et ? <span className="badge badge-purple">{et.code}</span> : <span className="text-muted">—</span>}</td>
                         <td>{u ? <span className="badge badge-gray">{u.symbol}</span> : <span className="text-muted">—</span>}</td>
                         <td>
-                          <button className="btn btn-ghost btn-icon btn-xs" style={{ color: '#ef4444' }}
-                            title="Удалить" onClick={() => setDeleteModal(p)}>✕</button>
+                          <div className="td-actions">
+                            <button className="btn btn-ghost btn-icon btn-xs" title="Подробнее"
+                              onClick={() => setDetailModal(p)}>ℹ</button>
+                            <button className="btn btn-ghost btn-icon btn-xs" style={{ color: '#ef4444' }}
+                              title="Удалить" onClick={() => setDeleteModal(p)}>✕</button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -156,6 +167,21 @@ export default function ParametersPage() {
             </select>
           </div>
         )}
+      </Modal>
+
+      {/* Detail modal (GET /parameters/{id}) */}
+      <Modal open={detailModal !== null} onClose={() => setDetailModal(null)}
+        title={`Параметр${paramDetail ? ` — ID ${paramDetail.id}` : ''}`}
+        footer={<button className="btn btn-secondary" onClick={() => setDetailModal(null)}>Закрыть</button>}>
+        {paramDetail ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div><span className="text-muted">Краткое имя: </span><span className="font-mono">{paramDetail.short_name}</span></div>
+            <div><span className="text-muted">Название: </span><strong>{paramDetail.name}</strong></div>
+            <div><span className="text-muted">Тип (ID): </span><span className="badge badge-gray">{paramDetail.param_type_id}</span></div>
+            {paramDetail.enum_type_id && <div><span className="text-muted">Enum тип ID: </span>{paramDetail.enum_type_id}</div>}
+            {paramDetail.unit_id && <div><span className="text-muted">Единица ID: </span>{paramDetail.unit_id}</div>}
+          </div>
+        ) : <div className="loading"><div className="spinner" /> Загрузка...</div>}
       </Modal>
 
       {/* Delete modal */}

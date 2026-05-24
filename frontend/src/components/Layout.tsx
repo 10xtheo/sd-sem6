@@ -6,6 +6,8 @@ const NAV = [
   { to: '/positions',  icon: '📦', label: 'Изделия' },
   { to: '/parameters', icon: '⚙️', label: 'Параметры' },
   { to: '/units',      icon: '📏', label: 'Единицы измерения' },
+  { to: '/stats',      icon: '📊', label: 'Статистика' },
+  { to: '/settings',   icon: '🔧', label: 'Настройки' },
 ];
 
 export function Layout() {

@@ -15,6 +15,12 @@ export default function UnitsPage() {
   const [form, setForm] = useState({ code: '', name: '', symbol: '' });
 
   const { data: units = [], isLoading } = useQuery({ queryKey: ['units'], queryFn: unitsApi.getAll });
+  // GET /units/{id} — fetch fresh unit data when editing
+  const { data: editingUnitDetail } = useQuery({
+    queryKey: ['unit', editModal?.id],
+    queryFn: () => unitsApi.getById(editModal!.id),
+    enabled: !!editModal,
+  });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['units'] });
 
@@ -121,7 +127,8 @@ export default function UnitsPage() {
         {UnitForm}
       </Modal>
 
-      <Modal open={editModal !== null} onClose={() => setEditModal(null)} title="Редактировать единицу"
+      <Modal open={editModal !== null} onClose={() => setEditModal(null)}
+        title={`Редактировать единицу${editingUnitDetail ? ` — ID ${editingUnitDetail.id}` : ''}`}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setEditModal(null)}>Отмена</button>

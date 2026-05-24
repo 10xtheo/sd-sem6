@@ -19,6 +19,8 @@ export const enumsApi = {
 
   getValues: () => client.get<EnumValue[]>('/enum/values').then(r => r.data),
 
+  getValue: (id: number) => client.get<EnumValue>(`/enum/values/${id}`).then(r => r.data),
+
   createValue: (data: {
     enum_type_id: number;
     order_number: number;
@@ -32,4 +34,9 @@ export const enumsApi = {
     client.patch<EnumValue>(`/enum/values/${id}`, data).then(r => r.data),
 
   deleteValue: (id: number) => client.delete(`/enum/values/${id}`),
+
+  /** POST /enum/validate — check if a value string belongs to a given type (by code) */
+  validate: (type_code: string, value: string) =>
+    client.post<{ valid: boolean; id: number; name: string }>('/enum/validate', { type_code, value })
+      .then(r => r.data),
 };

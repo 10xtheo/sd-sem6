@@ -11,6 +11,11 @@ export default function EnumEditorPage() {
   const { toast } = useToast();
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
 
+  // Validate
+  const [validateInput, setValidateInput] = useState('');
+  const [validateResult, setValidateResult] = useState<{ valid: boolean; id: number; name: string } | null>(null);
+  const [validating, setValidating] = useState(false);
+
   // Modals
   const [typeModal, setTypeModal] = useState<{ open: boolean; editing: EnumType | null }>({ open: false, editing: null });
   const [deleteTypeModal, setDeleteTypeModal] = useState<EnumType | null>(null);
@@ -22,10 +27,22 @@ export default function EnumEditorPage() {
   const [valueForm, setValueForm] = useState({ order_number: '1', name: '', code: '', numeric_value: '', unit_id: '' });
 
   const { data: types = [], isLoading: typesLoading } = useQuery({ queryKey: ['enum-types'], queryFn: enumsApi.getTypes });
+  // GET /enum/types/{id} — fetch fresh type detail when one is selected
+  const { data: selectedTypeDetail } = useQuery({
+    queryKey: ['enum-type-detail', selectedTypeId],
+    queryFn: () => enumsApi.getType(selectedTypeId!),
+    enabled: selectedTypeId !== null,
+  });
   const { data: values = [], isLoading: valuesLoading } = useQuery({
     queryKey: ['enum-values', selectedTypeId],
     queryFn: () => enumsApi.getTypeValues(selectedTypeId!),
     enabled: selectedTypeId !== null,
+  });
+  // GET /enum/values/{id} — fetch fresh value detail when editing
+  const { data: editingValueDetail } = useQuery({
+    queryKey: ['enum-value-detail', valueModal.editing?.id],
+    queryFn: () => enumsApi.getValue(valueModal.editing!.id),
+    enabled: !!valueModal.editing,
   });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: unitsApi.getAll });
 
@@ -78,6 +95,21 @@ export default function EnumEditorPage() {
     const d = { name: typeForm.name.trim(), code: typeForm.code.trim() };
     if (!d.name || !d.code) return;
     typeModal.editing ? updateTypeMut.mutate({ id: typeModal.editing.id, d }) : createTypeMut.mutate(d);
+  };
+
+  const doValidate = async () => {
+    if (!selectedType || !validateInput.trim()) return;
+    setValidating(true);
+    setValidateResult(null);
+    try {
+      const res = await enumsApi.validate(selectedType.code, validateInput.trim());
+      setValidateResult(res);
+    } catch {
+      setValidateResult(null);
+      toast('Значение не найдено', 'info');
+    } finally {
+      setValidating(false);
+    }
   };
 
   const submitValue = () => {
@@ -139,7 +171,10 @@ export default function EnumEditorPage() {
             {selectedType ? (
               <>
                 <div className="card-header">
-                  <span>Значения: <strong>{selectedType.name}</strong> <span className="font-mono text-muted">({selectedType.code})</span></span>
+                  <span>Значения: <strong>{selectedTypeDetail?.name ?? selectedType.name}</strong>
+                    <span className="font-mono text-muted"> ({selectedTypeDetail?.code ?? selectedType.code})</span>
+                    <span className="badge badge-gray" style={{ marginLeft: 6, fontSize: 10 }}>ID {selectedType.id}</span>
+                  </span>
                   <button className="btn btn-primary btn-xs" onClick={openAddValue}>+ Добавить значение</button>
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
@@ -172,6 +207,34 @@ export default function EnumEditorPage() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Validate panel ── */}
+                <div style={{ borderTop: '1px solid var(--border)', padding: '12px 16px', background: '#f8fafc' }}>
+                  <div className="form-label" style={{ marginBottom: 8 }}>
+                    Проверить значение (POST /enum/validate)
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input className="form-control" style={{ flex: 1, minWidth: 140 }}
+                      placeholder={`код или название значения…`}
+                      value={validateInput}
+                      onChange={e => { setValidateInput(e.target.value); setValidateResult(null); }}
+                      onKeyDown={e => e.key === 'Enter' && doValidate()} />
+                    <button className="btn btn-secondary" disabled={!validateInput.trim() || validating} onClick={doValidate}>
+                      {validating ? '...' : 'Проверить'}
+                    </button>
+                  </div>
+                  {validateResult !== null && (
+                    <div style={{ marginTop: 8, fontSize: 13 }}>
+                      {validateResult.valid ? (
+                        <span style={{ color: 'var(--success)' }}>
+                          ✓ Найдено: <strong>{validateResult.name}</strong> (ID {validateResult.id})
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--danger)' }}>✕ Значение не найдено в типе «{selectedType?.code}»</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -221,7 +284,9 @@ export default function EnumEditorPage() {
 
       {/* Value modal */}
       <Modal open={valueModal.open} onClose={() => setValueModal({ open: false, editing: null })}
-        title={valueModal.editing ? 'Редактировать значение' : 'Новое значение'}
+        title={valueModal.editing
+          ? `Редактировать значение${editingValueDetail ? ` — ID ${editingValueDetail.id}` : ''}`
+          : 'Новое значение'}
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => setValueModal({ open: false, editing: null })}>Отмена</button>

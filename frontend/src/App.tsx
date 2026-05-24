@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from './components/Toast';
 import { Layout } from './components/Layout';
-import ClassifierPage from './pages/ClassifierPage';
-import EnumEditorPage from './pages/EnumEditorPage';
-import PositionsPage from './pages/PositionsPage';
+import ClassifierPage   from './pages/ClassifierPage';
+import EnumEditorPage   from './pages/EnumEditorPage';
+import PositionsPage    from './pages/PositionsPage';
 import PositionCardPage from './pages/PositionCardPage';
-import ParametersPage from './pages/ParametersPage';
-import UnitsPage from './pages/UnitsPage';
+import ParametersPage   from './pages/ParametersPage';
+import UnitsPage        from './pages/UnitsPage';
+import StatsPage        from './pages/StatsPage';
+import SettingsPage     from './pages/SettingsPage';
 
 const qc = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -27,6 +29,8 @@ export default function App() {
               <Route path="/positions/:id" element={<PositionCardPage />} />
               <Route path="/parameters"    element={<ParametersPage />} />
               <Route path="/units"         element={<UnitsPage />} />
+              <Route path="/stats"         element={<StatsPage />} />
+              <Route path="/settings"      element={<SettingsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

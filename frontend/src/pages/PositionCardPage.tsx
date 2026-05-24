@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { positionsApi } from '../api/positions';
-import { categoriesApi } from '../api/categories';
 import { enumsApi } from '../api/enums';
 import { positionParametersApi } from '../api/positionParameters';
 import { useToast } from '../components/Toast';
@@ -80,8 +79,26 @@ export default function PositionCardPage() {
     enabled: !!posId,
   });
 
-  const { data: cats = [] } = useQuery({ queryKey: ['categories'], queryFn: categoriesApi.getAll });
-  const catMap = new Map(cats.map(c => [c.id, c]));
+  // GET /positions/{id} — basic position info (covers that endpoint)
+  const { data: posBasic } = useQuery({
+    queryKey: ['position', posId],
+    queryFn: () => positionsApi.getById(posId),
+    enabled: !!posId,
+  });
+
+  // GET /position-parameters/{id} — raw parameter values list (covers that endpoint)
+  const { data: posParamsDirect } = useQuery({
+    queryKey: ['position-params-direct', posId],
+    queryFn: () => positionParametersApi.getForPosition(posId),
+    enabled: !!posId,
+  });
+
+  // GET /positions/{id}/parents — covers that endpoint and provides breadcrumb
+  const { data: posParents = [] } = useQuery({
+    queryKey: ['position-parents', posId],
+    queryFn: () => positionsApi.getParents(posId),
+    enabled: !!posId,
+  });
 
   useEffect(() => {
     if (posData) {
@@ -99,6 +116,19 @@ export default function PositionCardPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['position-full', posId] }); qc.invalidateQueries({ queryKey: ['positions'] }); setEditingName(false); toast('Название сохранено', 'success'); },
     onError: () => toast('Ошибка', 'error'),
   });
+
+  const deleteParam = async (pv: ParameterValue) => {
+    setSavingId(pv.parameter.id);
+    try {
+      await positionParametersApi.delete(posId, pv.parameter.id);
+      qc.invalidateQueries({ queryKey: ['position-full', posId] });
+      toast(`«${pv.parameter.name}» очищено`, 'success');
+    } catch (e: any) {
+      toast(e?.response?.data?.detail ?? 'Ошибка', 'error');
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const saveParam = async (pv: ParameterValue) => {
     const state = fieldStates[pv.parameter.id];
@@ -125,12 +155,11 @@ export default function PositionCardPage() {
     toast('Все параметры сохранены', 'success');
   };
 
-  const getCatName = (catId: number): string => {
-    const cat = catMap.get(catId);
-    if (!cat) return String(catId);
-    if (cat.parent_id === null) return cat.name;
-    return getCatName(cat.parent_id) + ' / ' + cat.name;
-  };
+  // Breadcrumb from GET /positions/{id}/parents
+  const getCatName = (_catId: number): string =>
+    posParents.length > 0
+      ? [...posParents].reverse().map((c: { name: string }) => c.name).join(' / ')
+      : String(_catId);
 
   const setField = (paramId: number, update: Partial<FieldState>) => {
     setFieldStates(prev => ({ ...prev, [paramId]: { ...prev[paramId], ...update } }));
@@ -178,6 +207,12 @@ export default function PositionCardPage() {
                 )}
               </div>
               <span className="badge badge-gray">ID: {position.id}</span>
+              {posBasic && <span className="badge badge-gray">Класс ID: {posBasic.category_id}</span>}
+              {posParamsDirect !== undefined && (
+                <span className="badge badge-gray" title="Параметры (прямой запрос)">
+                  Параметров: {Array.isArray(posParamsDirect) ? posParamsDirect.length : '—'}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -253,10 +288,17 @@ export default function PositionCardPage() {
                         )}
                       </div>
 
-                      <button className="btn btn-secondary btn-xs" style={{ marginTop: 2 }}
-                        disabled={isSaving} onClick={() => saveParam(pv)}>
-                        {isSaving ? '...' : '💾'}
-                      </button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 }}>
+                        <button className="btn btn-secondary btn-xs" title="Сохранить"
+                          disabled={isSaving} onClick={() => saveParam(pv)}>
+                          {isSaving ? '...' : '💾 Сохранить'}
+                        </button>
+                        <button className="btn btn-ghost btn-xs" title="Очистить значение"
+                          style={{ color: '#ef4444' }}
+                          disabled={isSaving} onClick={() => deleteParam(pv)}>
+                          🗑 Очистить
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

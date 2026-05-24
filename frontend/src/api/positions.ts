@@ -1,9 +1,14 @@
 import client from './client';
-import type { Position, PositionWithParameters } from '../types';
+import type { Position, PositionWithParameters, PositionFull } from '../types';
 
 export const positionsApi = {
   getAll: (params?: { category_id?: number; search?: string }) =>
     client.get<Position[]>('/positions', { params }).then(r => r.data),
+
+  /** Advanced search — supports name, category_id + any {short_name}_min/max/contains/eq params */
+  search: (params: Record<string, string | number | undefined>) =>
+    client.get<PositionFull[]>('/positions/search', { params }).then(r => r.data),
+
 
   getById: (id: number) => client.get<Position>(`/positions/${id}`).then(r => r.data),
 

@@ -18,4 +18,7 @@ export const positionParametersApi = {
 
   getForPosition: (positionId: number) =>
     client.get(`/position-parameters/${positionId}`).then(r => r.data),
+
+  delete: (positionId: number, parameterId: number) =>
+    client.delete(`/position-parameters/${positionId}/parameters/${parameterId}`),
 };
