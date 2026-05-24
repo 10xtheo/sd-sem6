@@ -74,7 +74,6 @@ export default function UnitsPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Единицы измерения</div>
-          <div className="page-subtitle">Справочник единиц для числовых параметров</div>
         </div>
         <button className="btn btn-primary" onClick={openAdd}>+ Добавить</button>
       </div>

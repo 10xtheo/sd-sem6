@@ -218,7 +218,6 @@ export default function ClassifierPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Классификатор</div>
-          <div className="page-subtitle">Дерево классов изделий (включая изделия) и управление параметрами</div>
         </div>
         <button className="btn btn-primary" onClick={() => setAddModal({ open: true, parentId: null })}>
           + Корневой класс

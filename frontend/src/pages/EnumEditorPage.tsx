@@ -131,7 +131,6 @@ export default function EnumEditorPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Перечисления</div>
-          <div className="page-subtitle">Типы и значения перечислений</div>
         </div>
       </div>
 

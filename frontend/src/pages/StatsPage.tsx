@@ -29,7 +29,6 @@ export default function StatsPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Статистика</div>
-          <div className="page-subtitle">Сводка по базе данных</div>
         </div>
         <button className="btn btn-secondary" onClick={refresh}>↺ Обновить</button>
       </div>

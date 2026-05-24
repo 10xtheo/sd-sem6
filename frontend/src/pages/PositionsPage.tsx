@@ -248,7 +248,6 @@ export default function PositionsPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Изделия</div>
-          <div className="page-subtitle">Поиск по классу, названию и значениям параметров</div>
         </div>
         <button className="btn btn-primary" onClick={() => setAddModal(true)}>+ Новое изделие</button>
       </div>

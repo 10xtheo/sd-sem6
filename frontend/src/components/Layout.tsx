@@ -16,7 +16,6 @@ export function Layout() {
       <aside className="sidebar">
         <div className="sidebar-logo">
           Справочник изделий
-          <small>Управление классификатором</small>
         </div>
         <nav>
           {NAV.map(n => (

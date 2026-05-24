@@ -67,7 +67,6 @@ export default function ParametersPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Параметры</div>
-          <div className="page-subtitle">Справочник параметров для классов изделий</div>
         </div>
         <button className="btn btn-primary" onClick={() => setAddModal(true)}>+ Новый параметр</button>
       </div>

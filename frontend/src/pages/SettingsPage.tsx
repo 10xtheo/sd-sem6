@@ -42,7 +42,6 @@ export default function SettingsPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Настройки</div>
-          <div className="page-subtitle">Управление данными базы</div>
         </div>
       </div>
 
@@ -115,7 +114,7 @@ export default function SettingsPage() {
         }>
         <p>Это безвозвратно удалит <strong>все данные</strong>. Для подтверждения введите слово:</p>
         <div className="form-group" style={{ marginTop: 10 }}>
-          <code style={{ display: 'block', padding: '4px 8px', background: '#f8fafc', borderRadius: 4, marginBottom: 8 }}>УДАЛИТЬ</code>
+          <code style={{ display: 'block', padding: '4px 8px', background: '#f8fafc', marginBottom: 8 }}>УДАЛИТЬ</code>
           <input className="form-control" value={clearInput}
             onChange={e => setClearInput(e.target.value)}
             placeholder="Введите УДАЛИТЬ для подтверждения"
