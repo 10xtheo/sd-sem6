@@ -23,12 +23,17 @@ export default function ParametersPage() {
   const { data: params = [], isLoading } = useQuery({ queryKey: ['parameters'], queryFn: parametersApi.getAll });
   const { data: enumTypes = [] } = useQuery({ queryKey: ['enum-types'], queryFn: enumsApi.getTypes });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: unitsApi.getAll });
+  // All enum values — used to resolve param_type_id → code string
+  const { data: allEnumValues = [] } = useQuery({ queryKey: ['enum-values-all'], queryFn: enumsApi.getValues });
   // GET /parameters/{id} — fetch fresh detail when viewing
   const { data: paramDetail } = useQuery({
     queryKey: ['parameter', detailModal?.id],
     queryFn: () => parametersApi.getById(detailModal!.id),
     enabled: !!detailModal,
   });
+
+  // Map: enum_value.id → {code, name} for resolving param_type_id
+  const typeEnumMap = new Map(allEnumValues.map(v => [v.id, v]));
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['parameters'] });
 
@@ -81,18 +86,24 @@ export default function ParametersPage() {
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>ID</th><th>Краткое имя</th><th>Название</th><th>Тип (ID)</th><th>Enum тип</th><th>Ед.изм.</th><th></th></tr>
+                  <tr><th>ID</th><th>Краткое имя</th><th>Название</th><th>Тип</th><th>Enum тип</th><th>Ед.изм.</th><th></th></tr>
                 </thead>
                 <tbody>
                   {params.map(p => {
                     const et = enumTypes.find(e => e.id === p.enum_type_id);
                     const u = units.find(u => u.id === p.unit_id);
+                    const typeEV = typeEnumMap.get(p.param_type_id);
+                    const typeCode = typeEV?.code ?? null;
                     return (
                       <tr key={p.id}>
                         <td className="text-muted font-mono">{p.id}</td>
                         <td><span className="font-mono" style={{ fontWeight: 600 }}>{p.short_name}</span></td>
                         <td>{p.name}</td>
-                        <td><span className="badge badge-gray font-mono">{p.param_type_id}</span></td>
+                        <td>
+                          {typeCode
+                            ? <span className={`badge type-${typeCode}`}>{typeCode}</span>
+                            : <span className="badge badge-gray font-mono">{p.param_type_id}</span>}
+                        </td>
                         <td>{et ? <span className="badge badge-purple">{et.code}</span> : <span className="text-muted">—</span>}</td>
                         <td>{u ? <span className="badge badge-gray">{u.symbol}</span> : <span className="text-muted">—</span>}</td>
                         <td>
@@ -171,17 +182,49 @@ export default function ParametersPage() {
 
       {/* Detail modal (GET /parameters/{id}) */}
       <Modal open={detailModal !== null} onClose={() => setDetailModal(null)}
-        title={`Параметр${paramDetail ? ` — ID ${paramDetail.id}` : ''}`}
+        title={`Параметр${paramDetail ? ` #${paramDetail.id}` : ''}`}
         footer={<button className="btn btn-secondary" onClick={() => setDetailModal(null)}>Закрыть</button>}>
-        {paramDetail ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div><span className="text-muted">Краткое имя: </span><span className="font-mono">{paramDetail.short_name}</span></div>
-            <div><span className="text-muted">Название: </span><strong>{paramDetail.name}</strong></div>
-            <div><span className="text-muted">Тип (ID): </span><span className="badge badge-gray">{paramDetail.param_type_id}</span></div>
-            {paramDetail.enum_type_id && <div><span className="text-muted">Enum тип ID: </span>{paramDetail.enum_type_id}</div>}
-            {paramDetail.unit_id && <div><span className="text-muted">Единица ID: </span>{paramDetail.unit_id}</div>}
-          </div>
-        ) : <div className="loading"><div className="spinner" /> Загрузка...</div>}
+        {paramDetail ? (() => {
+          const typeEV  = typeEnumMap.get(paramDetail.param_type_id);
+          const typeCode = typeEV?.code ?? null;
+          const et = enumTypes.find(e => e.id === paramDetail.enum_type_id);
+          const u  = units.find(u => u.id === paramDetail.unit_id);
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <span className="text-muted" style={{ minWidth: 120 }}>Краткое имя</span>
+                <span className="font-mono" style={{ fontWeight: 600 }}>{paramDetail.short_name}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <span className="text-muted" style={{ minWidth: 120 }}>Полное название</span>
+                <span>{paramDetail.name}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span className="text-muted" style={{ minWidth: 120 }}>Тип данных</span>
+                <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  {typeCode
+                    ? <span className={`badge type-${typeCode}`}>{typeCode}</span>
+                    : <span className="badge badge-gray">{paramDetail.param_type_id}</span>}
+                  {typeEV?.name && <span className="text-muted" style={{ fontSize: 12 }}>{typeEV.name}</span>}
+                </span>
+              </div>
+              {et && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span className="text-muted" style={{ minWidth: 120 }}>Перечисление</span>
+                  <span className="badge badge-purple">{et.code}</span>
+                  <span className="text-muted" style={{ fontSize: 12 }}>{et.name}</span>
+                </div>
+              )}
+              {u && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span className="text-muted" style={{ minWidth: 120 }}>Единица измерения</span>
+                  <span className="badge badge-gray">{u.symbol}</span>
+                  <span className="text-muted" style={{ fontSize: 12 }}>{u.name}</span>
+                </div>
+              )}
+            </div>
+          );
+        })() : <div className="loading"><div className="spinner" /> Загрузка...</div>}
       </Modal>
 
       {/* Delete modal */}
