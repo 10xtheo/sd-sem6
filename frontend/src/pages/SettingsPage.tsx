@@ -61,7 +61,7 @@ export default function SettingsPage() {
             <div>
               <button className="btn btn-primary" onClick={() => setSeedConfirm(true)}
                 disabled={seedMut.isPending}>
-                {seedMut.isPending ? '⏳ Загрузка...' : '📥 Заполнить тестовыми данными'}
+                {seedMut.isPending ? 'Загрузка...' : 'Заполнить тестовыми данными'}
               </button>
             </div>
           </div>
@@ -70,7 +70,7 @@ export default function SettingsPage() {
         {/* Clear */}
         <div className="card" style={{ borderColor: '#fecaca' }}>
           <div className="card-header" style={{ color: 'var(--danger)' }}>
-            ⚠️ Очистить базу данных
+            Очистить базу данных
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <p>Безвозвратно удаляет <strong>все</strong> классы, параметры, изделия и перечисления.</p>
@@ -78,7 +78,7 @@ export default function SettingsPage() {
             <div>
               <button className="btn btn-danger" onClick={() => setClearConfirm(true)}
                 disabled={clearMut.isPending}>
-                {clearMut.isPending ? '⏳ Очистка...' : '🗑 Очистить базу'}
+                {clearMut.isPending ? 'Очистка...' : 'Очистить базу'}
               </button>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function SettingsPage() {
       </Modal>
 
       {/* Clear confirm */}
-      <Modal open={clearConfirm} onClose={() => { setClearConfirm(false); setClearInput(''); }} title="⚠️ Очистить всю базу?"
+      <Modal open={clearConfirm} onClose={() => { setClearConfirm(false); setClearInput(''); }} title="Очистить всю базу?"
         footer={
           <>
             <button className="btn btn-secondary" onClick={() => { setClearConfirm(false); setClearInput(''); }}>Отмена</button>

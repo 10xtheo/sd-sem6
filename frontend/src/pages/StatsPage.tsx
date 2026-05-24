@@ -39,17 +39,16 @@ export default function StatsPage() {
         {/* ── Summary cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
           {[
-            { label: 'Классов всего',        value: summary?.categories_total,  icon: '🌳', loading: sLoading },
-            { label: 'Корневых классов',      value: summary?.categories_root,   icon: '📁', loading: sLoading },
-            { label: 'Изделий всего',         value: summary?.positions_total,   icon: '📦', loading: sLoading },
-            { label: 'Значений перечислений', value: allEnumValues.length,       icon: '📋', loading: false },
+            { label: 'Классов всего',        value: summary?.categories_total,  loading: sLoading },
+            { label: 'Корневых классов',      value: summary?.categories_root,   loading: sLoading },
+            { label: 'Изделий всего',         value: summary?.positions_total,   loading: sLoading },
+            { label: 'Значений перечислений', value: allEnumValues.length,       loading: false },
           ].map(stat => (
-            <div key={stat.label} className="card" style={{ textAlign: 'center', padding: '20px 16px' }}>
-              <div style={{ fontSize: 28, marginBottom: 6 }}>{stat.icon}</div>
+            <div key={stat.label} className="card" style={{ textAlign: 'center', padding: '16px' }}>
               {stat.loading ? (
                 <div className="spinner" style={{ margin: '0 auto' }} />
               ) : (
-                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent)' }}>
+                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>
                   {stat.value ?? '—'}
                 </div>
               )}
@@ -110,7 +109,7 @@ export default function StatsPage() {
             Проверка целостности
             {integrity && (
               <span className={`badge ${integrity.ok ? 'badge-green' : 'badge-orange'}`}>
-                {integrity.ok ? '✓ OK' : `⚠ ${integrity.issues.length} проблем`}
+                {integrity.ok ? 'OK' : `${integrity.issues.length} проблем`}
               </span>
             )}
           </div>
@@ -119,7 +118,7 @@ export default function StatsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <p className="text-muted">Нажмите «Проверить», чтобы запустить анализ целостности данных.</p>
                 <button className="btn btn-secondary" onClick={() => setIntegrityRun(true)}>
-                  🔎 Проверить
+                  Проверить
                 </button>
               </div>
             ) : iLoading ? (
@@ -127,8 +126,7 @@ export default function StatsPage() {
             ) : !integrity ? (
               <p className="text-danger">Ошибка запроса</p>
             ) : integrity.ok ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--success)', fontWeight: 500 }}>
-                <span style={{ fontSize: 20 }}>✓</span>
+              <div style={{ color: 'var(--success)', fontWeight: 500 }}>
                 Проблем не обнаружено. База данных целостна.
               </div>
             ) : (

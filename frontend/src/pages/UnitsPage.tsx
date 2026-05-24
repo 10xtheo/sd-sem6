@@ -87,7 +87,7 @@ export default function UnitsPage() {
           </div>
           {isLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
           {!isLoading && units.length === 0 && (
-            <div className="empty-state"><div className="empty-icon">📏</div><p>Нет единиц измерения</p></div>
+            <div className="empty-state"><p>Нет единиц измерения</p></div>
           )}
           {units.length > 0 && (
             <div className="table-wrap">

@@ -181,7 +181,7 @@ export default function PositionCardPage() {
           </div>
         </div>
         <button className="btn btn-primary" onClick={saveAll} disabled={position_parameters.length === 0}>
-          💾 Сохранить все
+          Сохранить все
         </button>
       </div>
 
@@ -226,7 +226,6 @@ export default function PositionCardPage() {
 
           {position_parameters.length === 0 && (
             <div className="empty-state">
-              <div className="empty-icon">⚙️</div>
               <p>У класса «{getCatName(position.category_id)}» нет параметров.<br />Добавьте их в разделе «Классификатор».</p>
             </div>
           )}
@@ -291,12 +290,12 @@ export default function PositionCardPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 2 }}>
                         <button className="btn btn-secondary btn-xs" title="Сохранить"
                           disabled={isSaving} onClick={() => saveParam(pv)}>
-                          {isSaving ? '...' : '💾 Сохранить'}
+                          {isSaving ? '...' : 'Сохранить'}
                         </button>
                         <button className="btn btn-ghost btn-xs" title="Очистить значение"
                           style={{ color: '#ef4444' }}
                           disabled={isSaving} onClick={() => deleteParam(pv)}>
-                          🗑 Очистить
+                          Очистить
                         </button>
                       </div>
                     </div>

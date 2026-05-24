@@ -1,13 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
 const NAV = [
-  { to: '/classifier', icon: '🌳', label: 'Классификатор' },
-  { to: '/enums',      icon: '📋', label: 'Перечисления' },
-  { to: '/positions',  icon: '📦', label: 'Изделия' },
-  { to: '/parameters', icon: '⚙️', label: 'Параметры' },
-  { to: '/units',      icon: '📏', label: 'Единицы измерения' },
-  { to: '/stats',      icon: '📊', label: 'Статистика' },
-  { to: '/settings',   icon: '🔧', label: 'Настройки' },
+  { to: '/classifier', label: 'Классификатор' },
+  { to: '/enums',      label: 'Перечисления' },
+  { to: '/positions',  label: 'Изделия' },
+  { to: '/parameters', label: 'Параметры' },
+  { to: '/units',      label: 'Единицы измерения' },
+  { to: '/stats',      label: 'Статистика' },
+  { to: '/settings',   label: 'Настройки' },
 ];
 
 export function Layout() {
@@ -25,7 +25,6 @@ export function Layout() {
               to={n.to}
               className={({ isActive }) => `sidebar-item${isActive ? ' active' : ''}`}
             >
-              <span className="icon">{n.icon}</span>
               {n.label}
             </NavLink>
           ))}

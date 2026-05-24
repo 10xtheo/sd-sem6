@@ -146,7 +146,7 @@ export default function EnumEditorPage() {
             <div style={{ flex: 1, overflowY: 'auto' }}>
               {typesLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
               {!typesLoading && types.length === 0 && (
-                <div className="empty-state"><div className="empty-icon">📋</div><p>Нет типов</p></div>
+                <div className="empty-state"><p>Нет типов</p></div>
               )}
               {types.map(t => (
                 <div key={t.id}
@@ -180,7 +180,7 @@ export default function EnumEditorPage() {
                 <div style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
                   {valuesLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
                   {!valuesLoading && values.length === 0 && (
-                    <div className="empty-state"><div className="empty-icon">🔢</div><p>Нет значений</p></div>
+                    <div className="empty-state"><p>Нет значений</p></div>
                   )}
                   {values.length > 0 && (
                     <div className="table-wrap">
@@ -230,10 +230,10 @@ export default function EnumEditorPage() {
                     <div style={{ marginTop: 8, fontSize: 13 }}>
                       {validateResult.valid ? (
                         <span style={{ color: 'var(--success)' }}>
-                          ✓ Найдено: <strong>{validateResult.name}</strong> (ID {validateResult.id})
+                          Найдено: <strong>{validateResult.name}</strong> (ID {validateResult.id})
                         </span>
                       ) : (
-                        <span style={{ color: 'var(--danger)' }}>✕ Значение не найдено в типе «{selectedType?.code}»</span>
+                        <span style={{ color: 'var(--danger)' }}>Значение не найдено в типе «{selectedType?.code}»</span>
                       )}
                     </div>
                   )}
@@ -241,7 +241,6 @@ export default function EnumEditorPage() {
               </>
             ) : (
               <div className="empty-state" style={{ flex: 1, justifyContent: 'center', display: 'flex', flexDirection: 'column' }}>
-                <div className="empty-icon">👈</div>
                 <p>Выберите тип перечисления<br />для управления его значениями</p>
               </div>
             )}

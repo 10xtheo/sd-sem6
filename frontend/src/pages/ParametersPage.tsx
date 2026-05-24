@@ -80,7 +80,7 @@ export default function ParametersPage() {
           </div>
           {isLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
           {!isLoading && params.length === 0 && (
-            <div className="empty-state"><div className="empty-icon">⚙️</div><p>Нет параметров</p></div>
+            <div className="empty-state"><p>Нет параметров</p></div>
           )}
           {params.length > 0 && (
             <div className="table-wrap">

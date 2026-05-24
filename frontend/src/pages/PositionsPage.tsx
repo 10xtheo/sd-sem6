@@ -289,13 +289,13 @@ export default function PositionsPage() {
             {/* If no category selected but we have filter rows with manual input */}
             {!categoryId && filterRows.length === 0 && (
               <div className="form-hint">
-                💡 Выберите класс, чтобы добавить фильтры по значениям параметров
+                Выберите класс, чтобы добавить фильтры по значениям параметров
               </div>
             )}
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button className="btn btn-primary" onClick={doSearch}>🔍 Найти</button>
+              <button className="btn btn-primary" onClick={doSearch}>Найти</button>
               {categoryId && (
                 <button className="btn btn-secondary" onClick={addFilterRow}>
                   + Добавить фильтр по параметру
@@ -325,7 +325,7 @@ export default function PositionsPage() {
             {isError   && <div className="empty-state"><p className="text-danger">Ошибка запроса</p></div>}
 
             {!isFetching && !isError && results.length === 0 && (
-              <div className="empty-state"><div className="empty-icon">🔍</div><p>Изделия не найдены</p></div>
+              <div className="empty-state"><p>Изделия не найдены</p></div>
             )}
 
             {!isFetching && results.length > 0 && (
@@ -354,7 +354,7 @@ export default function PositionsPage() {
                           <td>
                             <div className="td-actions">
                               <button className="btn btn-secondary btn-xs"
-                                onClick={() => navigate(`/positions/${pos.id}`)}>📝 Карточка</button>
+                                onClick={() => navigate(`/positions/${pos.id}`)}>Карточка</button>
                               <button className="btn btn-ghost btn-icon btn-xs" title="Переместить"
                                 onClick={() => { setMoveModal({ id: pos.id, category_id: pos.category_id, name: pos.name }); setMoveTarget(String(pos.category_id)); }}>↕</button>
                               <button className="btn btn-ghost btn-icon btn-xs" title="Удалить"
@@ -380,7 +380,6 @@ export default function PositionsPage() {
             {allLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
             {!allLoading && allPositions.length === 0 && (
               <div className="empty-state">
-                <div className="empty-icon">📦</div>
                 <p>Изделий нет. Нажмите «+ Новое изделие» или используйте фильтры выше.</p>
               </div>
             )}
@@ -399,7 +398,7 @@ export default function PositionsPage() {
                         <td>
                           <div className="td-actions">
                             <button className="btn btn-secondary btn-xs"
-                              onClick={() => navigate(`/positions/${pos.id}`)}>📝 Карточка</button>
+                              onClick={() => navigate(`/positions/${pos.id}`)}>Карточка</button>
                             <button className="btn btn-ghost btn-icon btn-xs" title="Переместить"
                               onClick={() => { setMoveModal(pos); setMoveTarget(String(pos.category_id)); }}>↕</button>
                             <button className="btn btn-ghost btn-icon btn-xs" title="Удалить"

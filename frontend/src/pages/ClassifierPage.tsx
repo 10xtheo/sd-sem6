@@ -51,8 +51,7 @@ function TreeCategoryNode({
   if (node.type === 'position') {
     return (
       <div className="tree-node-row" style={{ paddingLeft: 24, opacity: 0.85 }}>
-        <span style={{ width: 16, textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>📦</span>
-        <span className="tree-label" style={{ fontSize: 12 }} title={node.name}>{node.name}</span>
+        <span className="tree-label" style={{ fontSize: 12, color: 'var(--text-muted)' }} title={node.name}>{node.name}</span>
         <div className="tree-actions">
           <button className="btn btn-ghost btn-xs" title="Открыть карточку"
             onClick={e => { e.stopPropagation(); onNavigate(node.id); }}
@@ -237,7 +236,7 @@ export default function ClassifierPage() {
             <div className="tree-scroll">
               {treeLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
               {!treeLoading && treeNodes.length === 0 && (
-                <div className="tree-empty">Нет классов.<br />Нажмите «Корневой класс»</div>
+                <div className="tree-empty">Нет классов. Нажмите «Корневой класс».</div>
               )}
               {treeNodes.map(node => (
                 <TreeCategoryNode key={node.id} node={node}
@@ -262,7 +261,7 @@ export default function ClassifierPage() {
                     </span>
                     {breadcrumb && (
                       <span className="text-muted" style={{ fontSize: 11, fontWeight: 400 }}>
-                        📍 {breadcrumb}
+                        {breadcrumb}
                       </span>
                     )}
                     <span className="text-muted" style={{ fontSize: 11, fontWeight: 400 }}>
@@ -276,7 +275,7 @@ export default function ClassifierPage() {
                 <div className="card-body" style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
                   {paramsLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
                   {!paramsLoading && catParams.length === 0 && (
-                    <div className="empty-state"><div className="empty-icon">📋</div><p>Нет параметров у этого класса</p></div>
+                    <div className="empty-state"><p>Нет параметров у этого класса</p></div>
                   )}
                   {catParams.length > 0 && (
                     <div className="table-wrap">
@@ -309,7 +308,6 @@ export default function ClassifierPage() {
               </>
             ) : (
               <div className="empty-state" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div className="empty-icon">👈</div>
                 <p>Выберите класс в дереве<br />для управления его параметрами</p>
               </div>
             )}
