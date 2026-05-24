@@ -1,87 +1,99 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from database import get_session
-from repository import CategoryRepository
-from schemas import CategoryCreate, CategoryUpdate, CategoryMove, CategoryOut
+from services.category_service import CategoryService
+from schemas.category import CategoryCreate, CategoryUpdate, CategoryMove, CategoryOut
+from schemas.tree import TreeResponse
+from utils.filters import parse_param_filters
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 
-def get_repo(session: Session = Depends(get_session)) -> CategoryRepository:
-    return CategoryRepository(session)
+def get_service(session: Session = Depends(get_session)) -> CategoryService:
+    return CategoryService(session)
+
+
+@router.get("/tree", response_model=TreeResponse)
+def get_tree(
+    request: Request,
+    start_id: Optional[int] = Query(None),
+    service: CategoryService = Depends(get_service),
+):
+    param_filters = parse_param_filters(dict(request.query_params)) if request else []
+    items = service.get_tree(start_id=start_id, param_filters=param_filters)
+    return TreeResponse(items=items)
 
 
 @router.get("/", response_model=List[CategoryOut])
-def list_categories(repo: CategoryRepository = Depends(get_repo)):
-    return repo.get_all_categories()
-
-
-@router.get("/tree")
-def get_tree(start_id: Optional[int] = None, repo: CategoryRepository = Depends(get_repo)):
-    items = repo.get_tree(start_category_id=start_id)
-    return [
-        {"type": t, "id": obj.id, "name": obj.name, "level": level}
-        for t, obj, level in items
-    ]
+def list_categories(service: CategoryService = Depends(get_service)):
+    return service.get_all()
 
 
 @router.get("/{category_id}", response_model=CategoryOut)
-def get_category(category_id: int, repo: CategoryRepository = Depends(get_repo)):
-    category = repo.get_category(category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Категория не найдена")
-    return category
+def get_category(category_id: int, service: CategoryService = Depends(get_service)):
+    try:
+        return service.get_by_id(category_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/{category_id}/children", response_model=List[CategoryOut])
-def get_children(category_id: int, repo: CategoryRepository = Depends(get_repo)):
-    category = repo.get_category(category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Категория не найдена")
-    return repo.get_children(category_id=category_id)
+def get_children(category_id: int, service: CategoryService = Depends(get_service)):
+    try:
+        return service.get_children(category_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/{category_id}/descendants", response_model=List[CategoryOut])
-def get_descendants(category_id: int, repo: CategoryRepository = Depends(get_repo)):
-    category = repo.get_category(category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Категория не найдена")
-    return list(map(lambda x: x[0], repo.get_descendants_with_level(category_id)))
+def get_descendants(category_id: int, service: CategoryService = Depends(get_service)):
+    try:
+        return service.get_descendants(category_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
 @router.get("/{category_id}/parents", response_model=List[CategoryOut])
-def get_parents(category_id: int, repo: CategoryRepository = Depends(get_repo)):
-    category = repo.get_category(category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Категория не найдена")
-    return repo.get_all_parents(category)
+def get_parents(category_id: int, service: CategoryService = Depends(get_service)):
+    try:
+        return service.get_parents(category_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post("/", response_model=CategoryOut, status_code=201)
-def create_category(body: CategoryCreate, repo: CategoryRepository = Depends(get_repo)):
-    return repo.add_category(name=body.name, parent_id=body.parent_id)
+def create_category(body: CategoryCreate, service: CategoryService = Depends(get_service)):
+    try:
+        return service.create(name=body.name, parent_id=body.parent_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.patch("/{category_id}", response_model=CategoryOut)
-def rename_category(category_id: int, body: CategoryUpdate, repo: CategoryRepository = Depends(get_repo)):
-    ok, message, category = repo.update_category(category_id, name=body.name)
-    if not ok:
-        raise HTTPException(status_code=400, detail=message)
-    return category
+def rename_category(category_id: int, body: CategoryUpdate, service: CategoryService = Depends(get_service)):
+    try:
+        return service.rename(category_id, name=body.name)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.patch("/{category_id}/move", response_model=CategoryOut)
-def move_category(category_id: int, body: CategoryMove, repo: CategoryRepository = Depends(get_repo)):
+def move_category(category_id: int, body: CategoryMove, service: CategoryService = Depends(get_service)):
     try:
-        return repo.move_category(category_id, body.new_parent_id)
+        return service.move(category_id, new_parent_id=body.new_parent_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/{category_id}", status_code=204)
-def delete_category(category_id: int, cascade: bool = False, repo: CategoryRepository = Depends(get_repo)):
+def delete_category(
+    category_id: int,
+    cascade: bool = False,
+    service: CategoryService = Depends(get_service),
+):
     try:
-        repo.delete_category(category_id, cascade=cascade)
+        service.delete(category_id, cascade=cascade)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
