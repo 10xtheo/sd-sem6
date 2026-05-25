@@ -211,7 +211,7 @@ export default function EnumEditorPage() {
                 </div>
 
                 {/* ── Validate panel ── */}
-                <div style={{ borderTop: '1px solid var(--border)', padding: '12px 16px', background: '#f8fafc' }}>
+                {/* <div style={{ borderTop: '1px solid var(--border)', padding: '12px 16px', background: '#f8fafc' }}>
                   <div className="form-label" style={{ marginBottom: 8 }}>
                     Проверить значение (POST /enum/validate)
                   </div>
@@ -236,7 +236,7 @@ export default function EnumEditorPage() {
                       )}
                     </div>
                   )}
-                </div>
+                </div> */}
               </>
             ) : (
               <div className="empty-state" style={{ flex: 1, justifyContent: 'center', display: 'flex', flexDirection: 'column' }}>

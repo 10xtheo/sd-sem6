@@ -4,106 +4,135 @@ import { statsApi, type IntegrityIssue } from '../api/stats';
 import { enumsApi } from '../api/enums';
 
 const ISSUE_LABELS: Record<string, string> = {
-  self_reference:    'Категория — родитель самой себя',
-  missing_parent:    'Отсутствует родительская категория',
-  missing_category:  'Изделие ссылается на несуществующий класс',
+	self_reference: 'Категория — родитель самой себя',
+	missing_parent: 'Отсутствует родительская категория',
+	missing_category: 'Изделие ссылается на несуществующий класс',
 };
 
 export default function StatsPage() {
-  const [integrityRun, setIntegrityRun] = useState(false);
+	const [integrityRun, setIntegrityRun] = useState(false);
 
-  const { data: summary, isLoading: sLoading, refetch: rSum } =
-    useQuery({ queryKey: ['stats-summary'],      queryFn: statsApi.getSummary });
-  const { data: byCategory = [], isLoading: bLoading, refetch: rCat } =
-    useQuery({ queryKey: ['stats-by-category'],  queryFn: statsApi.getByCategory });
-  const { data: integrity,  isLoading: iLoading, refetch: rInt } =
-    useQuery({ queryKey: ['stats-integrity'],    queryFn: statsApi.getIntegrity, enabled: integrityRun });
-  // GET /enum/values — total enum values count
-  const { data: allEnumValues = [], refetch: rEnums } =
-    useQuery({ queryKey: ['enum-values-all'],    queryFn: enumsApi.getValues });
+	const {
+		data: summary,
+		isLoading: sLoading,
+		refetch: rSum,
+	} = useQuery({ queryKey: ['stats-summary'], queryFn: statsApi.getSummary });
+	const {
+		data: byCategory = [],
+		isLoading: bLoading,
+		refetch: rCat,
+	} = useQuery({ queryKey: ['stats-by-category'], queryFn: statsApi.getByCategory });
+	const {
+		data: integrity,
+		isLoading: iLoading,
+		refetch: rInt,
+	} = useQuery({ queryKey: ['stats-integrity'], queryFn: statsApi.getIntegrity, enabled: integrityRun });
+	// GET /enum/values — total enum values count
+	const { data: allEnumValues = [], refetch: rEnums } = useQuery({
+		queryKey: ['enum-values-all'],
+		queryFn: enumsApi.getValues,
+	});
 
-  const refresh = () => { rSum(); rCat(); rEnums(); if (integrityRun) rInt(); };
+	const refresh = () => {
+		rSum();
+		rCat();
+		rEnums();
+		if (integrityRun) rInt();
+	};
 
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-title">Статистика</div>
-        </div>
-        <button className="btn btn-secondary" onClick={refresh}>↺ Обновить</button>
-      </div>
+	return (
+		<>
+			<div className="page-header">
+				<div>
+					<div className="page-title">Статистика</div>
+				</div>
+				<button className="btn btn-secondary" onClick={refresh}>
+					↺ Обновить
+				</button>
+			</div>
 
-      <div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+			<div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+				{/* ── Summary cards ── */}
+				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+					{[
+						{ label: 'Классов всего', value: summary?.categories_total, loading: sLoading },
+						{ label: 'Корневых классов', value: summary?.categories_root, loading: sLoading },
+						{ label: 'Изделий всего', value: summary?.positions_total, loading: sLoading },
+						{ label: 'Значений перечислений', value: allEnumValues.length, loading: false },
+					].map((stat) => (
+						<div key={stat.label} className="card" style={{ textAlign: 'center', padding: '16px' }}>
+							{stat.loading ? (
+								<div className="spinner" style={{ margin: '0 auto' }} />
+							) : (
+								<div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>
+									{stat.value ?? '—'}
+								</div>
+							)}
+							<div className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
+								{stat.label}
+							</div>
+						</div>
+					))}
+				</div>
 
-        {/* ── Summary cards ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
-          {[
-            { label: 'Классов всего',        value: summary?.categories_total,  loading: sLoading },
-            { label: 'Корневых классов',      value: summary?.categories_root,   loading: sLoading },
-            { label: 'Изделий всего',         value: summary?.positions_total,   loading: sLoading },
-            { label: 'Значений перечислений', value: allEnumValues.length,       loading: false },
-          ].map(stat => (
-            <div key={stat.label} className="card" style={{ textAlign: 'center', padding: '16px' }}>
-              {stat.loading ? (
-                <div className="spinner" style={{ margin: '0 auto' }} />
-              ) : (
-                <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>
-                  {stat.value ?? '—'}
-                </div>
-              )}
-              <div className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
+				{/* ── By-category table ── */}
+				<div className="card">
+					<div className="card-header">
+						Статистика по классам
+						<span className="badge badge-gray">{byCategory.length}</span>
+					</div>
+					{bLoading && (
+						<div className="loading">
+							<div className="spinner" /> Загрузка...
+						</div>
+					)}
+					{!bLoading && byCategory.length === 0 && (
+						<div className="empty-state">
+							<p>Нет данных</p>
+						</div>
+					)}
+					{byCategory.length > 0 && (
+						<div className="table-wrap">
+							<table>
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Класс</th>
+										<th style={{ textAlign: 'right' }}>Дочерних классов</th>
+										<th style={{ textAlign: 'right' }}>Изделий</th>
+									</tr>
+								</thead>
+								<tbody>
+									{[...byCategory]
+										.sort((a, b) => b.positions_count - a.positions_count)
+										.map((row) => (
+											<tr key={row.id}>
+												<td className="text-muted font-mono">{row.id}</td>
+												<td style={{ fontWeight: 500 }}>{row.name}</td>
+												<td style={{ textAlign: 'right' }}>
+													{row.children_count > 0 ? (
+														<span className="badge badge-blue">{row.children_count}</span>
+													) : (
+														<span className="text-muted">0</span>
+													)}
+												</td>
+												<td style={{ textAlign: 'right' }}>
+													{row.positions_count > 0 ? (
+														<span className="badge badge-green">{row.positions_count}</span>
+													) : (
+														<span className="text-muted">0</span>
+													)}
+												</td>
+											</tr>
+										))}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</div>
 
-        {/* ── By-category table ── */}
-        <div className="card">
-          <div className="card-header">
-            Статистика по классам
-            <span className="badge badge-gray">{byCategory.length}</span>
-          </div>
-          {bLoading && <div className="loading"><div className="spinner" /> Загрузка...</div>}
-          {!bLoading && byCategory.length === 0 && (
-            <div className="empty-state"><p>Нет данных</p></div>
-          )}
-          {byCategory.length > 0 && (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Класс</th>
-                    <th style={{ textAlign: 'right' }}>Дочерних классов</th>
-                    <th style={{ textAlign: 'right' }}>Изделий</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...byCategory]
-                    .sort((a, b) => b.positions_count - a.positions_count)
-                    .map(row => (
-                      <tr key={row.id}>
-                        <td className="text-muted font-mono">{row.id}</td>
-                        <td style={{ fontWeight: 500 }}>{row.name}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          {row.children_count > 0
-                            ? <span className="badge badge-blue">{row.children_count}</span>
-                            : <span className="text-muted">0</span>}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          {row.positions_count > 0
-                            ? <span className="badge badge-green">{row.positions_count}</span>
-                            : <span className="text-muted">0</span>}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* ── Integrity check ── */}
-        <div className="card">
+				{/* ── Integrity check ── */}
+				{/* <div className="card">
           <div className="card-header">
             Проверка целостности
             {integrity && (
@@ -155,9 +184,8 @@ export default function StatsPage() {
               </div>
             )}
           </div>
-        </div>
-
-      </div>
-    </>
-  );
+        </div> */}
+			</div>
+		</>
+	);
 }
