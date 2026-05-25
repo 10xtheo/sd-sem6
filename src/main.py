@@ -1,9 +1,18 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from routers import categories_router, positions_router, stats_router, settings_router, units_router, enum_router, parameters_router, category_parameters_router, position_parameters_router
 
 app = FastAPI(title="Классификатор продуктов")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # или ["*"] для разработки
+    allow_credentials=True,  # Важно для кук/авторизации
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Явно включаем OPTIONS
+    allow_headers=["Content-Type", "Authorization", "Accept"],  # Все нужные заголовки
+)
 
 app.include_router(categories_router)
 app.include_router(positions_router)
