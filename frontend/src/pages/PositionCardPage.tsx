@@ -563,9 +563,12 @@ export default function PositionCardPage() {
 													title="Очистить значение"
 													style={{ color: '#ef4444' }}
 													disabled={isSaving}
-													onClick={() => deleteParam(pv)}
+													onClick={() => {
+														deleteParam(pv);
+														window.location.reload();
+													}}
 												>
-													Очистить
+													Удалить
 												</button>
 											</div>
 										</div>
