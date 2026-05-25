@@ -150,7 +150,7 @@ export default function PositionCardPage() {
 	const { data: categoryParams = [] } = useQuery({
 		queryKey: ['category-parameters', posData?.position.category_id],
 		queryFn: () => categoryParametersApi.getByCategoryId(posData?.position.category_id!),
-		enabled: !!posData?.position.category_id && showNewParam,
+		enabled: !!posData?.position.category_id,
 	});
 
 	// GET /positions/{id} — basic position info (covers that endpoint)
@@ -196,6 +196,19 @@ export default function PositionCardPage() {
 			setFieldStates(init);
 		}
 	}, [posData]);
+
+	const sortParametersByOrder = (params: ParameterValue[]) => {
+		const orderMap = new Map<number, number>();
+		categoryParams.forEach((cp) => {
+			orderMap.set(cp.parameter_id, cp.order_num);
+		});
+
+		return [...params].sort((a, b) => {
+			const orderA = orderMap.get(a.parameter.id) ?? Infinity;
+			const orderB = orderMap.get(b.parameter.id) ?? Infinity;
+			return orderA - orderB;
+		});
+	};
 
 	const updateMut = useMutation({
 		mutationFn: ({ name }: { name: string }) => positionsApi.update(posId, { name }),
@@ -434,7 +447,7 @@ export default function PositionCardPage() {
 
 					{position_parameters.length > 0 && (
 						<div style={{ padding: '8px 16px 16px' }}>
-							{[...position_parameters].map((pv) => {
+							{sortParametersByOrder(position_parameters).map((pv) => {
 								const typeCode = pv.parameter.paramType?.code ?? '';
 								const state = fieldStates[pv.parameter.id] ?? initFieldState(pv);
 								const unit = pv.parameter.unit;
