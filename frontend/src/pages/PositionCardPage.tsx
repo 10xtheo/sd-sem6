@@ -140,6 +140,11 @@ export default function PositionCardPage() {
 	});
 	const [addingParam, setAddingParam] = useState(false);
 
+	// Роль: 'user' или 'admin'
+	const [role] = useState<'user' | 'admin'>(() => {
+		return (localStorage.getItem('app_role') as 'user' | 'admin') || 'user';
+	});
+
 	const { data: posData, isLoading } = useQuery({
 		queryKey: ['position-full', posId],
 		queryFn: () => positionsApi.getFull(posId),
@@ -368,7 +373,17 @@ export default function PositionCardPage() {
 						<div className="page-subtitle">{getCatName(position.category_id)}</div>
 					</div>
 				</div>
-				<button className="btn btn-primary" onClick={saveAll} disabled={position_parameters.length === 0}>
+				<button
+					className="btn btn-primary"
+					onClick={() => {
+						if (role !== 'admin') {
+							return alert('Нет доступа');
+						}
+
+						saveAll();
+					}}
+					disabled={position_parameters.length === 0}
+				>
 					Сохранить все
 				</button>
 			</div>
@@ -489,6 +504,7 @@ export default function PositionCardPage() {
 											<div style={{ flex: 1, minWidth: 180 }}>
 												{typeCode === 'real' && (
 													<input
+														readOnly={role === 'user'}
 														type="number"
 														step="any"
 														className="form-control"
@@ -501,6 +517,7 @@ export default function PositionCardPage() {
 												)}
 												{typeCode === 'integer' && (
 													<input
+														readOnly={role === 'user'}
 														type="number"
 														step="1"
 														className="form-control"
@@ -513,6 +530,7 @@ export default function PositionCardPage() {
 												)}
 												{typeCode === 'string' && (
 													<input
+														readOnly={role === 'user'}
 														type="text"
 														className="form-control"
 														value={state.val_str}
@@ -524,6 +542,7 @@ export default function PositionCardPage() {
 												)}
 												{typeCode === 'datetime' && (
 													<input
+														readOnly={role === 'user'}
 														type="datetime-local"
 														className="form-control"
 														value={state.val_dt}
@@ -536,15 +555,20 @@ export default function PositionCardPage() {
 													<EnumSelect
 														enumTypeId={pv.parameter.enumType.id}
 														value={state.enum_val_id}
-														onChange={(id) =>
-															setField(pv.parameter.id, { enum_val_id: id })
-														}
+														onChange={(id) => {
+															if (role !== 'admin') {
+																return alert('Нет доступа');
+															}
+
+															setField(pv.parameter.id, { enum_val_id: id });
+														}}
 													/>
 												)}
 												{!['real', 'integer', 'string', 'datetime', 'enum'].includes(
 													typeCode,
 												) && (
 													<input
+														readOnly={role === 'user'}
 														type="text"
 														className="form-control"
 														value={state.val_str}
@@ -567,7 +591,13 @@ export default function PositionCardPage() {
 													className="btn btn-secondary btn-xs"
 													title="Сохранить"
 													disabled={isSaving}
-													onClick={() => saveParam(pv)}
+													onClick={() => {
+														if (role !== 'admin') {
+															return alert('Нет доступа');
+														}
+
+														saveParam(pv);
+													}}
 												>
 													{isSaving ? '...' : 'Сохранить'}
 												</button>
@@ -577,6 +607,10 @@ export default function PositionCardPage() {
 													style={{ color: '#ef4444' }}
 													disabled={isSaving}
 													onClick={() => {
+														if (role !== 'admin') {
+															return alert('Нет доступа');
+														}
+
 														deleteParam(pv);
 														window.location.reload();
 													}}
@@ -596,7 +630,13 @@ export default function PositionCardPage() {
 					{!showNewParam ? (
 						<button
 							className="btn btn-secondary"
-							onClick={() => setShowNewParam(true)}
+							onClick={() => {
+								if (role !== 'admin') {
+									return alert('Нет доступа');
+								}
+
+								setShowNewParam(true);
+							}}
 							style={{ width: '100%' }}
 						>
 							+ Добавить параметр
