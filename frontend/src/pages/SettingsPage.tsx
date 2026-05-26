@@ -101,13 +101,16 @@ export default function SettingsPage() {
 							</span>
 							.
 						</p>
-						<p className="text-muted" style={{ fontSize: 12 }}>
-							Операция идемпотентна — повторный запуск не создаст дубликаты.
-						</p>
 						<div>
 							<button
 								className="btn btn-primary"
-								onClick={() => setSeedConfirm(true)}
+								onClick={() => {
+									if (role !== 'admin') {
+										return alert('Нет доступа');
+									}
+
+									setSeedConfirm(true);
+								}}
 								disabled={seedMut.isPending}
 							>
 								{seedMut.isPending ? 'Загрузка...' : 'Заполнить тестовыми данными'}
@@ -125,13 +128,16 @@ export default function SettingsPage() {
 						<p>
 							Безвозвратно удаляет <strong>все</strong> классы, параметры, изделия и перечисления.
 						</p>
-						<p className="text-muted" style={{ fontSize: 12 }}>
-							Это действие нельзя отменить.
-						</p>
 						<div>
 							<button
 								className="btn btn-danger"
-								onClick={() => setClearConfirm(true)}
+								onClick={() => {
+									if (role !== 'admin') {
+										return alert('Нет доступа');
+									}
+
+									setClearConfirm(true);
+								}}
 								disabled={clearMut.isPending}
 							>
 								{clearMut.isPending ? 'Очистка...' : 'Очистить базу'}
